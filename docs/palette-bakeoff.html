@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scaler Hub — Palette Bake-off</title>
+  <style>
+    :root {
+      --page: #f3f4f6;
+      --ink: #111827;
+      --muted: #6b7280;
+      --card: #ffffff;
+      --line: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+      background: var(--page);
+      color: var(--ink);
+      padding: 32px 24px 64px;
+    }
+    h1 { font-size: 28px; margin: 0 0 8px; letter-spacing: -0.02em; }
+    .sub { color: var(--muted); margin: 0 0 28px; max-width: 720px; line-height: 1.5; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .preview {
+      height: 168px;
+      position: relative;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .preview-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+    .glass-bar {
+      height: 52px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 18px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.55);
+    }
+    .dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.35;
+    }
+    .dot.active {
+      opacity: 1;
+      outline: 2px solid currentColor;
+      outline-offset: 3px;
+    }
+    .meta { padding: 16px 18px 18px; }
+    .meta h2 { margin: 0 0 6px; font-size: 18px; }
+    .meta p { margin: 0 0 14px; color: var(--muted); font-size: 14px; line-height: 1.45; }
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .swatch {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+    .swatch-chip { height: 48px; }
+    .swatch-label {
+      padding: 6px 8px 8px;
+      background: #fff;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .swatch-label strong { display: block; color: var(--ink); }
+    .swatch-label span { color: var(--muted); font-family: ui-monospace, monospace; font-size: 10px; }
+    .rec {
+      display: inline-block;
+      margin-bottom: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #ecfdf5;
+      color: #047857;
+    }
+    .compare {
+      margin-top: 36px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+    }
+    .compare h2 { margin: 0 0 12px; font-size: 18px; }
+    .strip {
+      display: grid;
+      grid-template-columns: 120px repeat(5, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin-bottom: 10px;
+    }
+    .strip .name {
+      display: flex;
+      align-items: center;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .strip .cell {
+      height: 44px;
+      border-radius: 8px;
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .legend {
+      display: grid;
+      grid-template-columns: 120px repeat(5, 1fr);
+      gap: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Scaler Hub — visual palettes</h1>
+  <p class="sub">
+    Exact tokens from the grill Q6 bake-off (A / B / D / E). Each card shows a fake hub
+    canvas + frosted nav pill with the accent as the active icon.
+  </p>
+
+  <div class="grid" id="cards"></div>
+
+  <section class="compare">
+    <h2>Side-by-side strips</h2>
+    <div class="legend">
+      <div></div>
+      <div>Background</div>
+      <div>Surface</div>
+      <div>Text</div>
+      <div>Accent</div>
+      <div>Accent soft</div>
+    </div>
+    <div id="strips"></div>
+  </section>
+
+  <script>
+    const palettes = [
+      {
+        id: "A",
+        name: "Slate Glass",
+        vibe: "Quiet cinematic — original plan Theme A",
+        recommend: true,
+        bg: "#F4F4F6",
+        surface: "#FFFFFF",
+        text: "#2C2F33",
+        accent: "#5C6B89",
+        accentSoft: "#C5CDDA",
+        glass: "rgba(255,255,255,0.72)",
+      },
+      {
+        id: "B",
+        name: "Earthy Campus",
+        vibe: "Warm sand + sage — original plan Theme B",
+        recommend: false,
+        bg: "#EBE8E2",
+        surface: "#F7F4EE",
+        text: "#1A1A1A",
+        accent: "#7B8E7A",
+        accentSoft: "#A47764",
+        glass: "rgba(247,244,238,0.85)",
+      },
+      {
+        id: "D",
+        name: "Academic Blue",
+        vibe: "Campus / LMS trust blue",
+        recommend: false,
+        bg: "#F7F9FC",
+        surface: "#FFFFFF",
+        text: "#1B2430",
+        accent: "#4A90E2",
+        accentSoft: "#D8DADF",
+        glass: "rgba(255,255,255,0.7)",
+      },
+      {
+        id: "E",
+        name: "Mist Teal",
+        vibe: "Light liquid-glass — agent recommendation",
+        recommend: true,
+        bg: "#EEF3F6",
+        surface: "#FFFFFF",
+        text: "#14202A",
+        accent: "#0D9488",
+        accentSoft: "#99D5CF",
+        glass: "rgba(255,255,255,0.65)",
+      },
+    ];
+
+    const cards = document.getElementById("cards");
+    const strips = document.getElementById("strips");
+
+    for (const p of palettes) {
+      const card = document.createElement("article");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="preview" style="background:${p.bg}; color:${p.text};">
+          <div class="preview-label">${p.id} · Hub preview</div>
+          <div class="glass-bar" style="background:${p.glass}; color:${p.accent}; box-shadow: 0 8px 24px rgba(0,0,0,0.08);">
+            <span class="dot"></span>
+            <span class="dot active"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+        </div>
+        <div class="meta">
+          ${p.recommend ? '<span class="rec">Recommended shortlist</span>' : ""}
+          <h2>${p.id} — ${p.name}</h2>
+          <p>${p.vibe}</p>
+          <div class="swatches">
+            <div class="swatch">
+              <div class="swatch-chip" style="background:${p.bg}"></div>
+              <div class="swatch-label"><strong>Background</strong><span>${p.bg}</span></div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-chip" style="background:${p.surface}"></div>
+              <div class="swatch-label"><strong>Surface</strong><span>${p.surface}</span></div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-chip" style="background:${p.text}"></div>
+              <div class="swatch-label"><strong>Text</strong><span>${p.text}</span></div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-chip" style="background:${p.accent}"></div>
+              <div class="swatch-label"><strong>Accent</strong><span>${p.accent}</span></div>
+            </div>
+          </div>
+        </div>
+      `;
+      cards.appendChild(card);
+
+      const row = document.createElement("div");
+      row.className = "strip";
+      row.innerHTML = `
+        <div class="name">${p.id}</div>
+        <div class="cell" style="background:${p.bg}" title="${p.bg}"></div>
+        <div class="cell" style="background:${p.surface}" title="${p.surface}"></div>
+        <div class="cell" style="background:${p.text}" title="${p.text}"></div>
+        <div class="cell" style="background:${p.accent}" title="${p.accent}"></div>
+        <div class="cell" style="background:${p.accentSoft}" title="${p.accentSoft}"></div>
+      `;
+      strips.appendChild(row);
+    }
+  </script>
+</body>
+</html>
