@@ -140,3 +140,7 @@ npm run test:identity
 
 - [progress.md](./progress.md) — tracker
 - [docs/decisions.md](./docs/decisions.md) — locked grill decisions
+
+## Repository
+
+Canonical remotes: [Hollenite/ScalerOne](https://github.com/Hollenite/ScalerOne) and [DeeKush/ScalerOne](https://github.com/DeeKush/ScalerOne).
