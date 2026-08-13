@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Text,
   View,
-  type ListRenderItemInfo,
   useWindowDimensions,
 } from 'react-native';
 import Animated, {
@@ -14,17 +13,17 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { HUB_SECTIONS, getSection, type HubSection, type HubSubAction } from '@/src/data/hubSections';
+import { HUB_SECTIONS, getSection } from '@/src/data/hubSections';
 import { useNavStore } from '@/src/store/navStore';
 import { useReducedMotion } from '@/src/hooks/useReducedMotion';
-import { GlassSurface } from '@/src/components/hub/GlassSurface';
+import { GlassSurface } from '@/src/hub/GlassSurface';
 import { colors, radii, spacing, typography } from '@/src/theme/tokens';
 
 const ICON_SIZE = 52;
 const SPRING = { damping: 16, stiffness: 170 };
 
-function glyph(name: string): string {
-  const map: Record<string, string> = {
+function glyph(name) {
+  const map = {
     search: 'LF',
     bag: 'MP',
     car: 'TP',
@@ -47,8 +46,6 @@ function glyph(name: string): string {
   return map[name] ?? '•';
 }
 
-type RootItem = HubSection;
-
 export function FloatingHubNav() {
   const router = useRouter();
   const reduced = useReducedMotion();
@@ -60,13 +57,12 @@ export function FloatingHubNav() {
   const exitToRoot = useNavStore((s) => s.exitToRoot);
   const setActiveSubIndex = useNavStore((s) => s.setActiveSubIndex);
   const morph = useSharedValue(mode === 'section' ? 1 : 0);
-  const listRef = useRef<FlatList>(null);
+  const listRef = useRef(null);
 
   const section = activeSectionId ? getSection(activeSectionId) : undefined;
 
-  // Infinite loop: triple the sub-actions
   const loopSubs = useMemo(() => {
-    if (!section) return [] as HubSubAction[];
+    if (!section) return [];
     const base = section.subActions;
     return [...base, ...base, ...base];
   }, [section]);
@@ -75,7 +71,7 @@ export function FloatingHubNav() {
     transform: [{ scale: withSpring(1 + morph.value * 0.02, SPRING) }],
   }));
 
-  const onRootPress = (item: HubSection) => {
+  const onRootPress = (item) => {
     morph.value = reduced ? 1 : withSpring(1, SPRING);
     enterSection(item.id);
     router.push(`/(hub)/section/${item.id}`);
@@ -87,24 +83,20 @@ export function FloatingHubNav() {
     router.replace('/(hub)');
   };
 
-  const onSubPress = (index: number) => {
+  const onSubPress = (index) => {
     setActiveSubIndex(index % (section?.subActions.length ?? 1));
   };
 
-  const renderRoot = ({ item }: ListRenderItemInfo<RootItem>) => {
-    const active = false;
-    return (
-      <Pressable style={styles.iconHit} onPress={() => onRootPress(item)}>
-        <View style={[styles.iconOuter, active && styles.iconOuterActive]}>
-          {active ? <View style={styles.pill} /> : null}
-          <Text style={[styles.iconGlyph, active && styles.iconGlyphActive]}>{glyph(item.icon)}</Text>
-        </View>
-        <Text style={styles.iconCaption} numberOfLines={1}>
-          {item.title}
-        </Text>
-      </Pressable>
-    );
-  };
+  const renderRoot = ({ item }) => (
+    <Pressable style={styles.iconHit} onPress={() => onRootPress(item)}>
+      <View style={styles.iconOuter}>
+        <Text style={styles.iconGlyph}>{glyph(item.icon)}</Text>
+      </View>
+      <Text style={styles.iconCaption} numberOfLines={1}>
+        {item.title}
+      </Text>
+    </Pressable>
+  );
 
   const renderSectionChrome = () => {
     if (!section) return null;

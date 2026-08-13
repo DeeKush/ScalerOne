@@ -1,97 +1,46 @@
 # Scaler Hub
 
-React Native (Expo) campus hub — motion-first MVP.
+React Native (Expo SDK 54) campus hub — JavaScript. Android testers install a standalone APK; the phone does not need USB or Metro.
 
-**Expo SDK 54** (matches Play Store Expo Go **54.x**).  
-**Flow:** Info → Auth (25/75) → Root hub with hierarchical floating nav.
+**Flow:** swipe-up ID card → Google → card fills and flips → phone OTP → hub.
 
-## Quick start
+## Tester APK (recommended)
+
+On a machine with Android SDK (`ANDROID_HOME`, usually `~/Library/Android/sdk`):
 
 ```bash
 cp .env.example .env
-npm install --legacy-peer-deps
+npm install
+npm run apk
+```
+
+That writes **`dist/ScalerHub-preview.apk`**. Send the file (Drive, WhatsApp, AirDrop). On the phone: open the file → Install → allow unknown sources if asked → open **Scaler Hub**.
+
+This is a **release** APK with JS bundled inside. It keeps working after you unplug USB and after you quit Metro.
+
+## Dev (optional)
+
+```bash
+cp .env.example .env
+npm install
 npx expo start -c
 ```
 
-Scan the QR code with **Expo Go 54** from the Play Store / App Store. Mock auth is on by default when Firebase keys are empty.
-
-### Expo Go version mismatch
-
-Each Expo Go build supports **one** SDK. This project is **SDK 54**.
-
-| Your Expo Go | Works with this project? |
-|---|---|
-| Play Store **54.0.x** | Yes |
-| SDK 57 Expo Go (non-store / `eas go`) | No — upgrade the project instead |
-
-If you previously saw “project is incompatible”, you were likely on an SDK 57 project with Expo Go 54 — that is fixed by this downgrade. Always restart Metro after SDK changes: `npx expo start -c`.
-
-### If Expo Go hangs or “Something went wrong”
-
-1. Stop Metro, then clear cache: `npx expo start -c`
-2. Install native packages with `npx expo install <package>` (not plain `npm install`).
-3. If Metro logs `Cannot find module 'babel-preset-expo'`, run:
-   ```bash
-   npx expo install babel-preset-expo
-   npx expo start -c
-   ```
-4. If LAN fails: `npx expo start --tunnel -c`
-
-### Android physical device (recommended when Expo Go fails)
-
-Do **not** run `brew install adb` — there is no such formula. Use the Android SDK that Android Studio already installed.
-
-1. Add SDK tools to your shell (`~/.zshrc`):
-
-```bash
-export ANDROID_HOME=$HOME/Library/Android/sdk
-export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
-```
-
-Then `source ~/.zshrc`.
-
-2. Verify:
-
-```bash
-echo $ANDROID_HOME
-# should print: /Users/<you>/Library/Android/sdk
-adb version
-adb devices
-```
-
-3. On the phone: enable **Developer options → USB debugging**, plug in USB, accept the trust prompt. `adb devices` must show your device (not empty / not `unauthorized`).
-
-4. Build and install a native debug app (not Expo Go):
+Expo Go 54, or USB debug:
 
 ```bash
 npx expo run:android
 ```
 
-5. Later sessions:
-
-```bash
-npx expo start --dev-client
-```
-
-Open the **Scaler Hub** app on the phone.
-
-If the Auth screen red-screens with `androidClientId must be defined`, reload after pulling latest (mock auth supplies placeholder client IDs). For **real** Google sign-in, set `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` (and related) in `.env` and set `EXPO_PUBLIC_USE_MOCK_AUTH=false`.
-
-If Gradle still says `SDK location not found`, ensure `ANDROID_HOME` is set in the same terminal, or that `android/local.properties` contains:
-
-```
-sdk.dir=/Users/<you>/Library/Android/sdk
-```
-
-(`android/local.properties` is machine-local and must not be committed.)
+Debug USB builds talk to Metro. Unplug the cable (or stop Metro) and that install will not run. Use `npm run apk` for a shareable tester build.
 
 ### Dev demo path
 
-1. Tap **Next** on Info (watch 25/75 auth morph).
-2. Enter full name + phone, or tap **Dev: complete profile → Hub**.
-3. Mock Google uses the email field (`@sst.scaler.com` or `@scaler.com`).
-4. Mock OTP is **`123456`**.
-5. On Hub, tap a module in the floating nav (pill highlight + Home returns to root).
+1. Swipe the ID card up.
+2. Mock Google uses the email field (`@sst.scaler.com` or `@scaler.com`).
+3. Front fills (name + student ID from the email), then the card flips.
+4. Send OTP; mock code is **`123456`**.
+5. Or tap **Dev: complete profile → Hub**.
 
 ## Theme (Academic Blue)
 
@@ -117,22 +66,19 @@ cd functions && npm install && npm run build
 
 Set `EXPO_PUBLIC_FUNCTIONS_URL` to the functions base URL.
 
-**Phone OTP on Expo Go:** Firebase JS phone auth needs a native ApplicationVerifier. Use mock auth for Expo Go; use a dev client / `@react-native-firebase` for production phone linking, or send OTP via a Cloud Function + Twilio.
+**Phone OTP on Expo Go:** Firebase JS phone auth needs a native ApplicationVerifier. Use mock auth for Expo Go; use a release APK / dev client for production phone linking.
 
 ## Email identity
 
 - `user@scaler.com` → Scaler Employee
-- `ariyan.25bcs10115@sst.scaler.com` → batch **2025**, pass-out **2029**, roll **10115**, program **bcs**
+- `ariyan.25bcs10115@sst.scaler.com` → batch **2025**, pass-out **2029**, roll **10115**, program **bcs**, student ID **25bcs10115**
 
 ## Scripts
 
 ```bash
-npx expo start -c          # Metro + QR for Expo Go 54
-npx expo start --tunnel -c # if LAN/QR fails
-npx expo run:android       # physical Android / emulator (needs ANDROID_HOME)
-npx expo start --dev-client
-npm run ios
-npm run android
+npm run apk                 # standalone Android APK → dist/ScalerHub-preview.apk
+npx expo start -c           # Metro (debug only)
+npx expo run:android        # USB debug (needs Metro)
 npm run test:identity
 ```
 

@@ -1,15 +1,10 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text } from 'react-native';
 import { signOut } from '@/src/lib/auth';
 import { useAuthStore } from '@/src/store/authStore';
 import { useRouter } from 'expo-router';
 import { colors, radii, spacing, typography } from '@/src/theme/tokens';
 
-type Props = {
-  visible: boolean;
-  onClose: () => void;
-};
-
-export function ProfileSheet({ visible, onClose }: Props) {
+export function ProfileSheet({ visible, onClose }) {
   const profile = useAuthStore((s) => s.profile);
   const setProfile = useAuthStore((s) => s.setProfile);
   const router = useRouter();

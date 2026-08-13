@@ -1,19 +1,6 @@
-export type AccountType = 'employee' | 'student' | 'unknown';
+const ALLOWED_SUFFIXES = ['@sst.scaler.com', '@scaler.com'];
 
-export type EmailIdentity = {
-  email: string;
-  domainAllowed: boolean;
-  accountType: AccountType;
-  batchYear?: number;
-  passOutYear?: number;
-  rollNumber?: string;
-  programCode?: string;
-  parseError?: string;
-};
-
-const ALLOWED_SUFFIXES = ['@sst.scaler.com', '@scaler.com'] as const;
-
-export function isAllowedScalerEmail(email: string): boolean {
+export function isAllowedScalerEmail(email) {
   const normalized = email.trim().toLowerCase();
   return ALLOWED_SUFFIXES.some((suffix) => normalized.endsWith(suffix));
 }
@@ -22,9 +9,9 @@ export function isAllowedScalerEmail(email: string): boolean {
  * SST shape: name.YY{program}{roll}@sst.scaler.com
  * e.g. ariyan.25bcs10115@sst.scaler.com → batch 2025, pass-out 2029, roll 10115, program bcs
  */
-export function parseEmailIdentity(email: string): EmailIdentity {
+export function parseEmailIdentity(email) {
   const normalized = email.trim().toLowerCase();
-  const base: EmailIdentity = {
+  const base = {
     email: normalized,
     domainAllowed: isAllowedScalerEmail(normalized),
     accountType: 'unknown',
@@ -38,7 +25,6 @@ export function parseEmailIdentity(email: string): EmailIdentity {
     return { ...base, accountType: 'employee' };
   }
 
-  // @sst.scaler.com student
   const local = normalized.split('@')[0] ?? '';
   const match = local.match(/\.(\d{2})([a-z]+)(\d+)$/i);
   if (!match) {
@@ -62,4 +48,19 @@ export function parseEmailIdentity(email: string): EmailIdentity {
     rollNumber,
     programCode,
   };
+}
+
+export function formatStudentId(identity) {
+  if (!identity?.domainAllowed) return '';
+  if (identity.accountType === 'employee') return 'STAFF';
+  if (identity.batchYear && identity.programCode && identity.rollNumber) {
+    return `${String(identity.batchYear).slice(-2)}${identity.programCode}${identity.rollNumber}`;
+  }
+  return '';
+}
+
+export function displayNameFromEmail(email) {
+  const local = String(email).split('@')[0] || '';
+  const token = local.split('.')[0] || 'Student';
+  return token.charAt(0).toUpperCase() + token.slice(1);
 }

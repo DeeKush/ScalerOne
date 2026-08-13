@@ -1,15 +1,9 @@
 import { BlurView } from 'expo-blur';
-import { Platform, StyleSheet, View, type ViewStyle } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { colors, radii } from '@/src/theme/tokens';
 
-type Props = {
-  children: React.ReactNode;
-  style?: ViewStyle;
-  intensity?: number;
-};
-
 /** Glass surface with Android solid fallback (Decision 8 degrade path). */
-export function GlassSurface({ children, style, intensity = 40 }: Props) {
+export function GlassSurface({ children, style, intensity = 40 }) {
   if (Platform.OS === 'android') {
     return <View style={[styles.fallback, style]}>{children}</View>;
   }

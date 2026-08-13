@@ -6,7 +6,7 @@ import { useNavStore } from '@/src/store/navStore';
 import { colors, radii, spacing, typography } from '@/src/theme/tokens';
 
 export default function SectionScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams();
   const sectionId = String(id);
   const section = getSection(sectionId);
   const activeSubIndex = useNavStore((s) => s.activeSubIndex);
