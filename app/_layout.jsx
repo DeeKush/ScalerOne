@@ -8,11 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useAuthStore } from '@/src/store/authStore';
-import {
-  getMockProfile,
-  loadProfile,
-  subscribeAuth,
-} from '@/src/lib/auth';
+import { getMockProfile, loadProfile, subscribeAuth } from '@/src/lib/auth';
 import { useMockAuth } from '@/src/lib/firebase';
 import { colors } from '@/src/theme/tokens';
 
@@ -22,7 +18,7 @@ SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 const queryClient = new QueryClient();
 
-function AuthGate({ children }: { children: React.ReactNode }) {
+function AuthGate({ children }) {
   const router = useRouter();
   const segments = useSegments();
   const navigationState = useRootNavigationState();
@@ -32,7 +28,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const setLoading = useAuthStore((s) => s.setLoading);
 
   useEffect(() => {
-    let unsub: (() => void) | undefined;
+    let unsub;
     (async () => {
       setLoading(true);
       if (useMockAuth()) {
@@ -72,7 +68,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [loading, profile?.profileComplete, segments, router, navigationState?.key]);
 
-  return <>{children}</>;
+  return children;
 }
 
 export default function RootLayout() {

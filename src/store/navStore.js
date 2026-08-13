@@ -1,20 +1,7 @@
 import { create } from 'zustand';
 import { HUB_SECTIONS } from '@/src/data/hubSections';
 
-export type NavMode = 'root' | 'section';
-
-type NavStore = {
-  mode: NavMode;
-  activeSectionId: string | null;
-  activeSubIndex: number;
-  rootTitle: string;
-  enterSection: (sectionId: string) => void;
-  exitToRoot: () => void;
-  setActiveSubIndex: (index: number) => void;
-  headerTitle: () => string;
-};
-
-export const useNavStore = create<NavStore>((set, get) => ({
+export const useNavStore = create((set, get) => ({
   mode: 'root',
   activeSectionId: null,
   activeSubIndex: 0,

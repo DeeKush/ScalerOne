@@ -1,17 +1,4 @@
-export type HubSubAction = {
-  id: string;
-  title: string;
-  icon: string;
-};
-
-export type HubSection = {
-  id: string;
-  title: string;
-  icon: string;
-  subActions: HubSubAction[];
-};
-
-export const HUB_SECTIONS: HubSection[] = [
+export const HUB_SECTIONS = [
   {
     id: 'lost-found',
     title: 'Lost & Found',
@@ -74,6 +61,6 @@ export const HUB_SECTIONS: HubSection[] = [
   },
 ];
 
-export function getSection(id: string): HubSection | undefined {
+export function getSection(id) {
   return HUB_SECTIONS.find((s) => s.id === id);
 }

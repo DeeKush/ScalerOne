@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Slot } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import { HubHeader } from '@/src/components/hub/HubHeader';
-import { FloatingHubNav } from '@/src/components/nav/FloatingHubNav';
-import { ProfileSheet } from '@/src/components/hub/ProfileSheet';
+import { HubHeader } from '@/src/hub/HubHeader';
+import { FloatingHubNav } from '@/src/nav/FloatingHubNav';
+import { ProfileSheet } from '@/src/hub/ProfileSheet';
 import { colors } from '@/src/theme/tokens';
 
 export default function HubLayout() {

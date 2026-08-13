@@ -1,16 +1,12 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GlassSurface } from '@/src/components/hub/GlassSurface';
+import { GlassSurface } from '@/src/hub/GlassSurface';
 import { getSection } from '@/src/data/hubSections';
 import { useAuthStore } from '@/src/store/authStore';
 import { useNavStore } from '@/src/store/navStore';
 import { colors, spacing, typography } from '@/src/theme/tokens';
 
-type Props = {
-  onProfilePress: () => void;
-};
-
-export function HubHeader({ onProfilePress }: Props) {
+export function HubHeader({ onProfilePress }) {
   const insets = useSafeAreaInsets();
   const mode = useNavStore((s) => s.mode);
   const activeSectionId = useNavStore((s) => s.activeSectionId);

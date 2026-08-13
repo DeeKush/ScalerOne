@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 
-export function useReducedMotion(): boolean {
+export function useReducedMotion() {
   const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
