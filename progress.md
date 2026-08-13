@@ -1,8 +1,7 @@
 # Scaler Hub — Progress Tracker
 
-**Status:** Motion MVP on **Expo SDK 54** (Play Store Expo Go 54.x)  
-**Source plan:** `/Users/ariyan/Downloads/scaler-hub-implementation-plan.md`  
-**Last updated:** 2026-08-12
+**Status:** ID-card onboarding on **Expo SDK 54** (JavaScript)  
+**Last updated:** 2026-08-13
 
 ---
 
@@ -11,34 +10,42 @@
 | Phase | Status |
 |---|---|
 | Grill / shared understanding | Done |
-| 0–5 Motion MVP | Done |
-| Expo Go native pin fix | Done |
-| Downgrade SDK 57 → **54** | Done |
+| 0–5 Motion MVP | Done (replaced by ID-card swipe-up) |
+| JS conversion + folder cleanup | Done |
+| ID-card onboarding (swipe → Google → flip → OTP) | Done |
+| Standalone tester APK (`npm run apk`) | Done |
 
 ---
 
 ## How to run
 
+Tester APK (no USB):
+
 ```bash
-npm install --legacy-peer-deps
-npx expo start -c
+npm install
+npm run apk
 ```
 
-Use **Expo Go 54.0.x** from the Play Store.
+Install `dist/ScalerHub-preview.apk` on the phone.
+
+Debug:
+
+```bash
+npx expo start -c
+```
 
 ---
 
 ## Grill decisions
 
-See [docs/decisions.md](docs/decisions.md). All 11 locked.
+See [docs/decisions.md](docs/decisions.md). Item 7 updated to swipe-up + flip.
 
 ---
 
 ## Blockers / follow-ups
 
-- [x] Expo Go crash from async-storage / gesture-handler v3 — pinned to SDK 57 (`2.2.0` / `~2.32.0`)
 - [ ] Figma edit seat for design sync
 - [ ] Real Firebase project + Google client IDs
-- [ ] Native phone OTP (Expo Go limited) — use mock or dev client
+- [ ] Native phone OTP in the release APK (mock still default)
 - [ ] Splash screen (deferred)
 - [ ] Real module CRUD (post-v1)

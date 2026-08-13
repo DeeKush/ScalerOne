@@ -40,6 +40,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+/dist
 
 # Android SDK machine-local (if android/ is ever committed)
 **/local.properties
