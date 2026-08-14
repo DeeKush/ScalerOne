@@ -17,7 +17,7 @@ import { HUB_SECTIONS, getSection } from '@/src/data/hubSections';
 import { useNavStore } from '@/src/store/navStore';
 import { useReducedMotion } from '@/src/hooks/useReducedMotion';
 import { GlassSurface } from '@/src/hub/GlassSurface';
-import { colors, radii, spacing, typography } from '@/src/theme/tokens';
+import { colors, fonts, radii, spacing, typography } from '@/src/theme/tokens';
 
 const ICON_SIZE = 52;
 const SPRING = { damping: 16, stiffness: 170 };
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   },
   iconGlyph: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.text,
     zIndex: 1,
   },
@@ -230,8 +230,7 @@ const styles = StyleSheet.create({
   },
   iconCaption: {
     ...typography.caption,
-    color: colors.text,
-    opacity: 0.65,
+    color: colors.textSoft,
     maxWidth: ICON_SIZE + 12,
     textAlign: 'center',
     fontSize: 10,

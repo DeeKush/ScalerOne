@@ -33,8 +33,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   linkText: {
-    ...typography.body,
+    ...typography.label,
     color: colors.accent,
-    fontWeight: '600',
+    fontSize: 16,
   },
 });

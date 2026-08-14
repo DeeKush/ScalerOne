@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   title: { ...typography.title, color: colors.text },
-  sub: { ...typography.body, color: colors.text, opacity: 0.65 },
+  sub: { ...typography.body, color: colors.textSoft },
   grid: { gap: spacing.sm, marginTop: spacing.md },
   card: {
     backgroundColor: colors.surface,
@@ -40,5 +40,5 @@ const styles = StyleSheet.create({
     borderColor: colors.muted,
   },
   cardTitle: { ...typography.headline, fontSize: 17, color: colors.text },
-  cardSub: { ...typography.caption, color: colors.text, opacity: 0.55, marginTop: 4 },
+  cardSub: { ...typography.caption, color: colors.textSoft, marginTop: 4 },
 });

@@ -18,7 +18,7 @@ export function PhoneOtpSheet({
     <View style={styles.sheet}>
       <Text style={styles.kicker}>Almost there</Text>
       <Text style={styles.title}>Verify your phone</Text>
-      <Text style={styles.sub}>OTP is required after Google. This is not an alternate login.</Text>
+      <Text style={styles.sub}>Required after Google — not an alternate login.</Text>
 
       <Text style={styles.fieldLabel}>Phone</Text>
       <View style={styles.row}>
@@ -26,12 +26,16 @@ export function PhoneOtpSheet({
           value={phone}
           onChangeText={onChangePhone}
           placeholder="+91…"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colors.textSoft}
           style={[styles.input, styles.flex]}
           keyboardType="phone-pad"
         />
-        <Pressable style={styles.secondaryBtn} onPress={onSendOtp} disabled={busy}>
-          <Text style={styles.secondaryLabel}>Send OTP</Text>
+        <Pressable
+          style={[styles.accentBtn, busy && styles.disabled]}
+          onPress={onSendOtp}
+          disabled={busy}
+        >
+          <Text style={styles.accentLabel}>Send OTP</Text>
         </Pressable>
       </View>
 
@@ -41,12 +45,16 @@ export function PhoneOtpSheet({
           value={otp}
           onChangeText={onChangeOtp}
           placeholder={mock ? '123456' : '6-digit code'}
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colors.textSoft}
           style={[styles.input, styles.flex]}
           keyboardType="number-pad"
         />
-        <Pressable style={styles.secondaryBtn} onPress={onVerifyOtp} disabled={busy || !sent}>
-          <Text style={styles.secondaryLabel}>Verify</Text>
+        <Pressable
+          style={[styles.accentBtn, (busy || !sent) && styles.disabled]}
+          onPress={onVerifyOtp}
+          disabled={busy || !sent}
+        >
+          <Text style={styles.accentLabel}>Verify</Text>
         </Pressable>
       </View>
 
@@ -66,6 +74,7 @@ const styles = StyleSheet.create({
     ...typography.label,
     color: colors.accent,
     textTransform: 'uppercase',
+    letterSpacing: 1.2,
     textAlign: 'center',
   },
   title: {
@@ -75,8 +84,7 @@ const styles = StyleSheet.create({
   },
   sub: {
     ...typography.caption,
-    color: colors.text,
-    opacity: 0.6,
+    color: colors.textSoft,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
@@ -85,13 +93,13 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   input: {
-    borderWidth: 1,
-    borderColor: colors.muted,
+    backgroundColor: colors.surfaceMuted,
     borderRadius: radii.md,
     paddingHorizontal: spacing.md,
-    paddingVertical: 12,
+    paddingVertical: 14,
     color: colors.text,
-    backgroundColor: colors.surface,
+    fontSize: 15,
+    fontFamily: typography.body.fontFamily,
   },
   row: {
     flexDirection: 'row',
@@ -99,17 +107,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   flex: { flex: 1 },
-  secondaryBtn: {
-    backgroundColor: colors.accentSoft,
+  accentBtn: {
+    backgroundColor: colors.accent,
     paddingHorizontal: spacing.md,
-    paddingVertical: 12,
+    minHeight: 48,
+    justifyContent: 'center',
     borderRadius: radii.md,
   },
-  secondaryLabel: {
-    color: colors.accent,
-    fontWeight: '700',
+  accentLabel: {
+    color: '#fff',
+    fontFamily: typography.headline.fontFamily,
     fontSize: 13,
   },
+  disabled: { opacity: 0.45 },
   status: {
     ...typography.caption,
     color: colors.success,

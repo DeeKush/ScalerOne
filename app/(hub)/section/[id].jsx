@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   title: { ...typography.title, color: colors.text },
-  sub: { ...typography.body, color: colors.text, opacity: 0.65 },
+  sub: { ...typography.body, color: colors.textSoft },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
@@ -72,5 +72,5 @@ const styles = StyleSheet.create({
     borderColor: colors.accent,
     backgroundColor: colors.accentSoft,
   },
-  rowText: { ...typography.body, color: colors.text, fontWeight: '600' },
+  rowText: { ...typography.label, color: colors.text, fontSize: 16 },
 });

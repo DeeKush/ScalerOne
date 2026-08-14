@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text } from 'react-native';
 import { signOut } from '@/src/lib/auth';
 import { useAuthStore } from '@/src/store/authStore';
 import { useRouter } from 'expo-router';
-import { colors, radii, spacing, typography } from '@/src/theme/tokens';
+import { colors, fonts, radii, spacing, typography } from '@/src/theme/tokens';
 
 export function ProfileSheet({ visible, onClose }) {
   const profile = useAuthStore((s) => s.profile);
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
   title: { ...typography.label, color: colors.accent, textTransform: 'uppercase' },
   name: { ...typography.headline, color: colors.text },
-  meta: { ...typography.body, color: colors.text, opacity: 0.7 },
+  meta: { ...typography.body, color: colors.textSoft },
   badge: {
     marginTop: spacing.sm,
     alignSelf: 'flex-start',
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: radii.pill,
     overflow: 'hidden',
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
   },
   logout: {
     marginTop: spacing.lg,
@@ -75,5 +75,5 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
-  logoutText: { color: '#fff', fontWeight: '700' },
+  logoutText: { color: '#fff', fontFamily: fonts.bold },
 });
