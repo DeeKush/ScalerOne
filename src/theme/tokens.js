@@ -1,10 +1,22 @@
 /** Academic Blue — Decision 6 */
+
+export const fonts = {
+  medium: 'PlusJakartaSans_500Medium',
+  semibold: 'PlusJakartaSans_600SemiBold',
+  bold: 'PlusJakartaSans_700Bold',
+  extraBold: 'PlusJakartaSans_800ExtraBold',
+};
+
 export const colors = {
   bg: '#F7F9FC',
+  bgWash: '#DCEAFB',
   surface: '#FFFFFF',
+  surfaceMuted: '#F3F6FB',
   text: '#1B2430',
+  textSoft: '#5B6573',
   accent: '#4A90E2',
   muted: '#D8DADF',
+  line: '#E2E8F0',
   accentSoft: 'rgba(74, 144, 226, 0.18)',
   glass: 'rgba(255, 255, 255, 0.72)',
   glassBorder: 'rgba(255, 255, 255, 0.55)',
@@ -33,16 +45,34 @@ export const spacing = {
 
 export const radii = {
   sm: 8,
-  md: 12,
+  md: 14,
   lg: 16,
   card: 18,
+  sheet: 28,
   pill: 999,
 };
 
 export const typography = {
-  title: { fontSize: 28, fontWeight: '700', letterSpacing: -0.4 },
-  headline: { fontSize: 22, fontWeight: '700', letterSpacing: -0.3 },
-  body: { fontSize: 16, fontWeight: '400' },
-  label: { fontSize: 13, fontWeight: '600' },
-  caption: { fontSize: 12, fontWeight: '400' },
+  title: {
+    fontFamily: fonts.extraBold,
+    fontSize: 28,
+    letterSpacing: -0.5,
+  },
+  headline: {
+    fontFamily: fonts.bold,
+    fontSize: 22,
+    letterSpacing: -0.3,
+  },
+  body: {
+    fontFamily: fonts.medium,
+    fontSize: 16,
+  },
+  label: {
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+  },
+  caption: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+  },
 };

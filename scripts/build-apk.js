@@ -28,7 +28,14 @@ if (!process.env.JAVA_HOME) {
     path.join(process.env.HOME || '', 'Library/Java/JavaVirtualMachines/jbr-21.0.11/Contents/Home'),
     '/Applications/Android Studio.app/Contents/jbr/Contents/Home',
   ];
-  const jdk = jdkCandidates.find((dir) => fs.existsSync(path.join(dir, 'bin', 'java')));
+  const jdk = jdkCandidates.find((dir) => {
+    const java = path.join(dir, 'bin', 'java');
+    if (!fs.existsSync(java)) return false;
+    const probe = spawnSync(java, ['-version'], { encoding: 'utf8' });
+    const text = `${probe.stderr || ''}${probe.stdout || ''}`;
+    const major = Number((text.match(/version "(\d+)/) || [])[1] || 0);
+    return major >= 17 && major <= 24;
+  });
   if (jdk) process.env.JAVA_HOME = jdk;
 }
 
@@ -59,6 +66,14 @@ if (!fs.existsSync(gradlew)) {
   fail('android/gradlew missing after prebuild.');
 }
 fs.chmodSync(gradlew, 0o755);
+
+const wrapperProps = path.join(root, 'android', 'gradle', 'wrapper', 'gradle-wrapper.properties');
+if (fs.existsSync(wrapperProps)) {
+  const next = fs
+    .readFileSync(wrapperProps, 'utf8')
+    .replace(/networkTimeout=\d+/, 'networkTimeout=120000');
+  fs.writeFileSync(wrapperProps, next);
+}
 
 console.log('2/3  assembleRelease (JS bundled into APK — no Metro, no USB)');
 run(gradlew, [':app:assembleRelease'], path.join(root, 'android'));
