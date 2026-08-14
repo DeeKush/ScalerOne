@@ -1,5 +1,29 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { colors, radii, spacing, typography } from '@/src/theme/tokens';
+
+function GoogleMark() {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 48 48">
+      <Path
+        fill="#FFC107"
+        d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-7.8 19.7-20 0-1.2-.1-2.3-.3-3.5z"
+      />
+      <Path
+        fill="#FF3D00"
+        d="M6.3 14.7l6.6 4.8C14.7 16 19 12 24 12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"
+      />
+      <Path
+        fill="#4CAF50"
+        d="M24 44c5.2 0 10-2 13.5-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.3 44 24 44z"
+      />
+      <Path
+        fill="#1976D2"
+        d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.3 4.2-4.2 5.6l.1.1 6.2 5.2C39.2 37.3 43.7 31.5 43.7 24c0-1.2-.1-2.3-.3-3.5z"
+      />
+    </Svg>
+  );
+}
 
 export function GoogleSheet({
   mock,
@@ -24,12 +48,13 @@ export function GoogleSheet({
             value={googleEmail}
             onChangeText={onChangeEmail}
             placeholder="name.25bcs10115@sst.scaler.com"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.textSoft}
             style={styles.input}
             autoCapitalize="none"
             keyboardType="email-address"
             autoCorrect={false}
           />
+          <Text style={styles.helper}>OTP 123456 after the card flips</Text>
         </>
       ) : null}
 
@@ -39,20 +64,20 @@ export function GoogleSheet({
         disabled={busy}
         accessibilityRole="button"
       >
+        <GoogleMark />
         <Text style={styles.googleLabel}>
-          {mock ? 'Sign in with Google (mock)' : 'Sign in with Google'}
+          {mock ? 'Continue with Google' : 'Sign in with Google'}
         </Text>
       </Pressable>
 
       {__DEV__ ? (
-        <Pressable style={styles.devBtn} onPress={onDevComplete} disabled={busy}>
-          <Text style={styles.devLabel}>Dev: complete profile → Hub</Text>
+        <Pressable onPress={onDevComplete} disabled={busy} hitSlop={8}>
+          <Text style={styles.devLabel}>Dev: skip to Hub</Text>
         </Pressable>
       ) : null}
 
       {status ? <Text style={styles.status}>{status}</Text> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      {mock ? <Text style={styles.caption}>Mock auth on · OTP 123456 after the card flips</Text> : null}
     </View>
   );
 }
@@ -67,6 +92,7 @@ const styles = StyleSheet.create({
     ...typography.label,
     color: colors.accent,
     textTransform: 'uppercase',
+    letterSpacing: 1.2,
     textAlign: 'center',
   },
   title: {
@@ -76,8 +102,7 @@ const styles = StyleSheet.create({
   },
   sub: {
     ...typography.caption,
-    color: colors.text,
-    opacity: 0.6,
+    color: colors.textSoft,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
@@ -86,39 +111,46 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   input: {
-    borderWidth: 1,
-    borderColor: colors.muted,
+    backgroundColor: colors.surfaceMuted,
     borderRadius: radii.md,
     paddingHorizontal: spacing.md,
-    paddingVertical: 12,
+    paddingVertical: 14,
     color: colors.text,
-    backgroundColor: colors.surface,
+    fontSize: 15,
+    fontFamily: typography.body.fontFamily,
+  },
+  helper: {
+    ...typography.caption,
+    color: colors.textSoft,
+    marginTop: -4,
   },
   googleBtn: {
     marginTop: spacing.sm,
-    backgroundColor: colors.text,
+    minHeight: 52,
+    backgroundColor: colors.surface,
     borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.line,
     paddingVertical: 14,
+    paddingHorizontal: spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 10,
   },
   googleLabel: {
-    color: '#fff',
-    fontWeight: '700',
+    ...typography.label,
+    color: colors.text,
     fontSize: 16,
+    fontFamily: typography.headline.fontFamily,
   },
   disabled: { opacity: 0.55 },
-  devBtn: {
-    marginTop: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.muted,
-    borderRadius: radii.md,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
   devLabel: {
-    color: colors.text,
-    fontWeight: '600',
-    fontSize: 13,
+    ...typography.caption,
+    color: colors.textSoft,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+    textDecorationLine: 'underline',
   },
   status: {
     ...typography.caption,
@@ -128,12 +160,6 @@ const styles = StyleSheet.create({
   error: {
     ...typography.caption,
     color: colors.danger,
-    textAlign: 'center',
-  },
-  caption: {
-    ...typography.caption,
-    color: colors.text,
-    opacity: 0.45,
     textAlign: 'center',
   },
 });
