@@ -1,8 +1,16 @@
+export const HUB_ART = {
+  'lost-found': require('../../assets/images/hub/lost-found.png'),
+  marketplace: require('../../assets/images/hub/marketplace.png'),
+  transport: require('../../assets/images/hub/transport.png'),
+  'split-money': require('../../assets/images/hub/split-money.png'),
+};
+
 export const HUB_SECTIONS = [
   {
     id: 'lost-found',
     title: 'Lost & Found',
     icon: 'search',
+    art: HUB_ART['lost-found'],
     subActions: [
       { id: 'lf-home', title: 'Browse', icon: 'list' },
       { id: 'lf-report', title: 'Report Lost', icon: 'alert' },
@@ -14,6 +22,7 @@ export const HUB_SECTIONS = [
     id: 'marketplace',
     title: 'Marketplace',
     icon: 'bag',
+    art: HUB_ART.marketplace,
     subActions: [
       { id: 'mp-browse', title: 'Browse', icon: 'list' },
       { id: 'mp-sell', title: 'Sell', icon: 'tag' },
@@ -24,6 +33,7 @@ export const HUB_SECTIONS = [
     id: 'transport',
     title: 'Transport Pool',
     icon: 'car',
+    art: HUB_ART.transport,
     subActions: [
       { id: 'tp-rides', title: 'Rides', icon: 'car' },
       { id: 'tp-offer', title: 'Offer', icon: 'add' },
@@ -53,6 +63,7 @@ export const HUB_SECTIONS = [
     id: 'split-money',
     title: 'Split Money',
     icon: 'cash',
+    art: HUB_ART['split-money'],
     subActions: [
       { id: 'sm-groups', title: 'Groups', icon: 'people' },
       { id: 'sm-new', title: 'New Split', icon: 'add' },

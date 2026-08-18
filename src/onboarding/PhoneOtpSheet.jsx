@@ -2,7 +2,6 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, radii, spacing, typography } from '@/src/theme/tokens';
 
 export function PhoneOtpSheet({
-  mock,
   phone,
   otp,
   onChangePhone,
@@ -44,7 +43,7 @@ export function PhoneOtpSheet({
         <TextInput
           value={otp}
           onChangeText={onChangeOtp}
-          placeholder={mock ? '123456' : '6-digit code'}
+          placeholder="6-digit code"
           placeholderTextColor={colors.textSoft}
           style={[styles.input, styles.flex]}
           keyboardType="number-pad"

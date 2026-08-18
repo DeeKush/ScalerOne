@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Scaler Hub",
-    "slug": "scaler-hub",
+    "name": "ScalerOne",
+    "slug": "scaler-one",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "scalerhub",
+    "scheme": "scalerone",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
@@ -21,7 +21,8 @@
       },
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
-      "package": "com.scaler.hub"
+      "package": "com.scaler.hub",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -46,9 +47,14 @@
         {
           "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#F7F9FC"
+          "backgroundColor": "#F7F9FC",
+          "imageWidth": 220
         }
-      ]
+      ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-google-signin/google-signin",
+      "expo-dev-client"
     ]
   }
 }

@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react';
 import {
   FlatList,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -46,6 +47,19 @@ function glyph(name) {
   return map[name] ?? '•';
 }
 
+function SectionGlyph({ section, active }) {
+  if (section?.art) {
+    return (
+      <Image source={section.art} style={styles.iconArt} resizeMode="contain" />
+    );
+  }
+  return (
+    <Text style={[styles.iconGlyph, active && styles.iconGlyphActive]}>
+      {glyph(section?.icon)}
+    </Text>
+  );
+}
+
 export function FloatingHubNav() {
   const router = useRouter();
   const reduced = useReducedMotion();
@@ -89,8 +103,8 @@ export function FloatingHubNav() {
 
   const renderRoot = ({ item }) => (
     <Pressable style={styles.iconHit} onPress={() => onRootPress(item)}>
-      <View style={styles.iconOuter}>
-        <Text style={styles.iconGlyph}>{glyph(item.icon)}</Text>
+      <View style={[styles.iconOuter, item.art && styles.iconOuterArt]}>
+        <SectionGlyph section={item} />
       </View>
       <Text style={styles.iconCaption} numberOfLines={1}>
         {item.title}
@@ -206,6 +220,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  iconOuterArt: {
+    backgroundColor: '#FFFFFF',
+  },
+  iconArt: {
+    width: ICON_SIZE - 8,
+    height: ICON_SIZE - 8,
+    borderRadius: (ICON_SIZE - 8) / 2,
   },
   iconOuterActive: {},
   pill: {

@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { colors, radii, spacing, typography } from '@/src/theme/tokens';
 
@@ -25,38 +25,12 @@ function GoogleMark() {
   );
 }
 
-export function GoogleSheet({
-  mock,
-  googleEmail,
-  onChangeEmail,
-  onGoogle,
-  onDevComplete,
-  busy,
-  error,
-  status,
-}) {
+export function GoogleSheet({ onGoogle, busy, error, status }) {
   return (
     <View style={styles.sheet}>
-      <Text style={styles.kicker}>Scaler Hub</Text>
+      <Text style={styles.kicker}>ScalerOne</Text>
       <Text style={styles.title}>Sign in with Google</Text>
       <Text style={styles.sub}>Scaler accounts only · @sst.scaler.com or @scaler.com</Text>
-
-      {mock ? (
-        <>
-          <Text style={styles.fieldLabel}>Mock Scaler email</Text>
-          <TextInput
-            value={googleEmail}
-            onChangeText={onChangeEmail}
-            placeholder="name.25bcs10115@sst.scaler.com"
-            placeholderTextColor={colors.textSoft}
-            style={styles.input}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            autoCorrect={false}
-          />
-          <Text style={styles.helper}>OTP 123456 after the card flips</Text>
-        </>
-      ) : null}
 
       <Pressable
         style={[styles.googleBtn, busy && styles.disabled]}
@@ -65,16 +39,8 @@ export function GoogleSheet({
         accessibilityRole="button"
       >
         <GoogleMark />
-        <Text style={styles.googleLabel}>
-          {mock ? 'Continue with Google' : 'Sign in with Google'}
-        </Text>
+        <Text style={styles.googleLabel}>Sign in with Google</Text>
       </Pressable>
-
-      {__DEV__ ? (
-        <Pressable onPress={onDevComplete} disabled={busy} hitSlop={8}>
-          <Text style={styles.devLabel}>Dev: skip to Hub</Text>
-        </Pressable>
-      ) : null}
 
       {status ? <Text style={styles.status}>{status}</Text> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -91,8 +57,7 @@ const styles = StyleSheet.create({
   kicker: {
     ...typography.label,
     color: colors.accent,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
+    letterSpacing: 0.4,
     textAlign: 'center',
   },
   title: {
@@ -105,24 +70,6 @@ const styles = StyleSheet.create({
     color: colors.textSoft,
     textAlign: 'center',
     marginBottom: spacing.sm,
-  },
-  fieldLabel: {
-    ...typography.label,
-    color: colors.text,
-  },
-  input: {
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 14,
-    color: colors.text,
-    fontSize: 15,
-    fontFamily: typography.body.fontFamily,
-  },
-  helper: {
-    ...typography.caption,
-    color: colors.textSoft,
-    marginTop: -4,
   },
   googleBtn: {
     marginTop: spacing.sm,
@@ -145,13 +92,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.headline.fontFamily,
   },
   disabled: { opacity: 0.55 },
-  devLabel: {
-    ...typography.caption,
-    color: colors.textSoft,
-    textAlign: 'center',
-    marginTop: spacing.xs,
-    textDecorationLine: 'underline',
-  },
   status: {
     ...typography.caption,
     color: colors.success,

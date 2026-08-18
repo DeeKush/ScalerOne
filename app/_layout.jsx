@@ -13,8 +13,7 @@ import { PlusJakartaSans_600SemiBold } from '@expo-google-fonts/plus-jakarta-san
 import { PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans/700Bold';
 import { PlusJakartaSans_800ExtraBold } from '@expo-google-fonts/plus-jakarta-sans/800ExtraBold';
 import { useAuthStore } from '@/src/store/authStore';
-import { getMockProfile, loadProfile, subscribeAuth } from '@/src/lib/auth';
-import { useMockAuth } from '@/src/lib/firebase';
+import { loadProfile, profileFromAuthUser, subscribeAuth } from '@/src/lib/auth';
 import { colors } from '@/src/theme/tokens';
 
 export { ErrorBoundary } from 'expo-router';
@@ -34,26 +33,43 @@ function AuthGate({ children }) {
 
   useEffect(() => {
     let unsub;
-    (async () => {
-      setLoading(true);
-      if (useMockAuth()) {
-        setProfile(getMockProfile());
-        setLoading(false);
-        SplashScreen.hideAsync().catch(() => undefined);
-        return;
-      }
+    let cancelled = false;
+    setLoading(true);
+    try {
       unsub = subscribeAuth(async (user) => {
-        if (!user) {
-          setProfile(null);
-        } else {
-          const p = await loadProfile(user.uid);
-          setProfile(p);
+        try {
+          if (!user) {
+            setProfile(null);
+            return;
+          }
+          const current = useAuthStore.getState().profile;
+          try {
+            const p = await loadProfile(user.uid);
+            if (cancelled) return;
+            if (p) {
+              setProfile(p);
+            } else if (current?.uid !== user.uid) {
+              setProfile(profileFromAuthUser(user));
+            }
+          } catch {
+            if (cancelled) return;
+            if (current?.uid !== user.uid) {
+              setProfile(profileFromAuthUser(user));
+            }
+          }
+        } finally {
+          if (!cancelled) {
+            setLoading(false);
+            SplashScreen.hideAsync().catch(() => undefined);
+          }
         }
-        setLoading(false);
-        SplashScreen.hideAsync().catch(() => undefined);
       });
-    })();
+    } catch {
+      setLoading(false);
+      SplashScreen.hideAsync().catch(() => undefined);
+    }
     return () => {
+      cancelled = true;
       unsub?.();
     };
   }, [setLoading, setProfile]);

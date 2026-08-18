@@ -1,15 +1,16 @@
 import {
   GoogleAuthProvider,
   PhoneAuthProvider,
+  PhoneAuthState,
   linkWithCredential,
   onAuthStateChanged,
   signInWithCredential,
   signOut as firebaseSignOut,
-} from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
-import { getFirebaseAuth, getFirebaseDb, useMockAuth } from './firebase';
+  verifyPhoneNumber,
+} from '@react-native-firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from '@react-native-firebase/firestore';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { getFirebaseAuth, getFirebaseDb } from './firebase';
 import {
   parseEmailIdentity,
   formatStudentId,
@@ -17,62 +18,157 @@ import {
 } from './emailIdentity';
 import { computeProfileComplete, emptyProfile } from './userProfile';
 
-WebBrowser.maybeCompleteAuthSession();
+let googleConfigured = false;
+let pendingPhone = null;
 
-const MOCK_UID = 'mock-user';
+function errorCode(error) {
+  return String(error?.code ?? '');
+}
 
-let mockSession = null;
+function errorMessage(error) {
+  return String(error?.message ?? '');
+}
+
+function isUnavailable(error) {
+  const code = errorCode(error);
+  const message = errorMessage(error);
+  return (
+    code.includes('unavailable') ||
+    /firestore\/unavailable/i.test(code) ||
+    /service is currently unavailable/i.test(message)
+  );
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withBackoff(fn, attempts = 3) {
+  let last;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      last = error;
+      if (!isUnavailable(error) || i === attempts - 1) throw error;
+      await sleep(400 * 2 ** i);
+    }
+  }
+  throw last;
+}
+
+function mapAuthError(error) {
+  const code = errorCode(error);
+  const message = errorMessage(error);
+  const status = code.includes('/') ? code.slice(code.lastIndexOf('/') + 1) : code;
+
+  if (isUnavailable(error)) {
+    return new Error(
+      'Cloud database is unreachable. In Firebase Console (scalerone-746d8) create the default Firestore database named (default), then retry. Google sign-in itself already succeeded.'
+    );
+  }
+  if (code.includes('invalid-verification-code')) {
+    return new Error('Invalid OTP. Check the code and try again.');
+  }
+  if (code.includes('provider-already-linked')) {
+    return new Error('This phone number is already linked to this account.');
+  }
+  if (code.includes('credential-already-in-use')) {
+    return new Error('This phone number is already linked to another account.');
+  }
+  if (code.includes('session-expired')) {
+    return new Error('OTP expired. Send a new code.');
+  }
+  if (code.includes('too-many-requests')) {
+    return new Error('Too many attempts. Wait a bit and try again.');
+  }
+  if (code.includes('invalid-phone-number')) {
+    return new Error('Enter a valid phone number with country code, e.g. +91…');
+  }
+  if (code.includes('missing-client-identifier') || code.includes('app-not-authorized')) {
+    return new Error('Phone auth is not set up for this Android build. Add the app SHA-1 in Firebase.');
+  }
+
+  const playStatus =
+    code === '8' ||
+    code === '10' ||
+    code === '13' ||
+    status === '8' ||
+    status === '10' ||
+    status === '13' ||
+    status === 'INTERNAL' ||
+    status === 'INTERNAL_ERROR' ||
+    status === 'ERROR' ||
+    code.includes('DEVELOPER_ERROR') ||
+    code.includes('INTERNAL_ERROR') ||
+    /system error/i.test(message) ||
+    error?.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE;
+
+  if (playStatus) {
+    if (code === '10' || status === '10' || code.includes('DEVELOPER_ERROR')) {
+      return new Error(
+        'Google Sign-In is misconfigured. Use the Web OAuth client ID from this Firebase project and add the APK SHA-1 in Firebase.'
+      );
+    }
+    return new Error(
+      'Google Play Services had a system error. Update Play Services, check network, and try again.'
+    );
+  }
+
+  if (error instanceof Error && error.message) return error;
+  return new Error(message || 'Something went wrong');
+}
+
+function ensureGoogleConfigured() {
+  if (googleConfigured) return;
+  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  if (!webClientId) {
+    throw new Error('Set EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID in .env (Web OAuth client ID from Google Cloud).');
+  }
+  // hostedDomain cannot cover both @sst.scaler.com and @scaler.com; keep the picker open.
+  GoogleSignin.configure({ webClientId });
+  googleConfigured = true;
+}
+
+function stripLocalFlags(profile) {
+  const next = { ...profile };
+  delete next.firestoreSynced;
+  return next;
+}
 
 export async function loadProfile(uid) {
-  if (useMockAuth()) {
-    return mockSession?.profile.uid === uid ? mockSession.profile : null;
-  }
-  const db = getFirebaseDb();
-  if (!db) return null;
-  const snap = await getDoc(doc(db, 'users', uid));
-  if (!snap.exists()) return null;
-  return snap.data();
+  return withBackoff(async () => {
+    const db = getFirebaseDb();
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) return null;
+    return snap.data();
+  });
 }
 
 export async function upsertProfile(profile) {
   const next = {
-    ...profile,
+    ...stripLocalFlags(profile),
     profileComplete: computeProfileComplete(profile),
   };
-  if (useMockAuth()) {
-    mockSession = {
-      profile: next,
-      phoneCode: mockSession?.phoneCode ?? '123456',
-      pendingPhone: mockSession?.pendingPhone,
-    };
-    return;
-  }
-  const db = getFirebaseDb();
-  if (!db) throw new Error('Firestore not configured');
-  await setDoc(
-    doc(db, 'users', profile.uid),
-    { ...next, updatedAt: serverTimestamp() },
-    { merge: true }
-  );
+  await withBackoff(async () => {
+    const db = getFirebaseDb();
+    await setDoc(
+      doc(db, 'users', next.uid),
+      { ...next, updatedAt: serverTimestamp() },
+      { merge: true }
+    );
+  });
+  return next;
 }
 
 export function subscribeAuth(cb) {
-  if (useMockAuth()) {
-    cb(null);
-    return () => undefined;
-  }
-  const auth = getFirebaseAuth();
-  if (!auth) {
-    cb(null);
-    return () => undefined;
-  }
-  return onAuthStateChanged(auth, cb);
+  return onAuthStateChanged(getFirebaseAuth(), cb);
 }
 
 function profileFromIdentity(uid, email, extras = {}) {
   const identity = parseEmailIdentity(email);
   const fullName = extras.fullName?.trim() || displayNameFromEmail(email);
-  return {
+  const next = {
     ...emptyProfile(uid, identity.email || email),
     ...extras,
     uid,
@@ -85,147 +181,183 @@ function profileFromIdentity(uid, email, extras = {}) {
     programCode: identity.programCode,
     studentId: formatStudentId(identity),
   };
+  return { ...next, profileComplete: computeProfileComplete(next) };
 }
 
-export async function signInWithGoogleIdToken(idToken) {
-  if (useMockAuth()) {
-    throw new Error('Mock auth: use completeMockGoogle instead');
+export function profileFromAuthUser(user, extras = {}) {
+  return profileFromIdentity(user.uid, user.email ?? '', {
+    fullName: extras.fullName || user.displayName || '',
+    photoUrl: extras.photoUrl || user.photoURL || '',
+    phone: extras.phone ?? user.phoneNumber ?? '',
+    phoneVerified: extras.phoneVerified ?? Boolean(user.phoneNumber),
+  });
+}
+
+async function persistProfile(profile) {
+  try {
+    const saved = await upsertProfile(profile);
+    return { ...saved, firestoreSynced: true };
+  } catch (error) {
+    if (!isUnavailable(error)) throw mapAuthError(error);
+    return {
+      ...profile,
+      profileComplete: computeProfileComplete(profile),
+      firestoreSynced: false,
+    };
   }
+}
+
+export async function signInWithGoogle() {
+  ensureGoogleConfigured();
+  try {
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+  } catch (error) {
+    throw mapAuthError(error);
+  }
+
+  let response;
+  try {
+    response = await GoogleSignin.signIn();
+  } catch (error) {
+    if (error?.code === statusCodes.SIGN_IN_CANCELLED || error?.code === statusCodes.IN_PROGRESS) {
+      return null;
+    }
+    throw mapAuthError(error);
+  }
+
+  if (response?.type !== 'success') return null;
+  const idToken = response.data?.idToken;
+  if (!idToken) {
+    throw new Error('Google sign-in did not return an ID token. Check EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID.');
+  }
+
   const auth = getFirebaseAuth();
-  if (!auth) throw new Error('Firebase Auth not configured');
   const credential = GoogleAuthProvider.credential(idToken);
-  const result = await signInWithCredential(auth, credential);
+  let result;
+  try {
+    result = await signInWithCredential(auth, credential);
+  } catch (error) {
+    throw mapAuthError(error);
+  }
+
   const email = result.user.email ?? '';
   const identity = parseEmailIdentity(email);
   if (!identity.domainAllowed) {
     await firebaseSignOut(auth);
+    await GoogleSignin.signOut().catch(() => undefined);
     throw new Error('Scaler users only. Use @sst.scaler.com or @scaler.com');
   }
   await assertScalerEmailRemote(email).catch(() => undefined);
 
-  const existing = await loadProfile(result.user.uid);
+  let existing = null;
+  try {
+    existing = await loadProfile(result.user.uid);
+  } catch (error) {
+    if (!isUnavailable(error)) throw mapAuthError(error);
+  }
+
   const profile = {
     ...(existing ?? emptyProfile(result.user.uid, email)),
     ...profileFromIdentity(result.user.uid, email, {
       fullName: result.user.displayName || existing?.fullName,
       photoUrl: result.user.photoURL || existing?.photoUrl || '',
-      phone: existing?.phone ?? '',
-      phoneVerified: existing?.phoneVerified ?? false,
+      phone: existing?.phone ?? result.user.phoneNumber ?? '',
+      phoneVerified: existing?.phoneVerified ?? Boolean(result.user.phoneNumber),
     }),
   };
-  profile.profileComplete = computeProfileComplete(profile);
-  await upsertProfile(profile);
-  return profile;
-}
-
-export async function completeMockGoogle(email, fullName) {
-  const identity = parseEmailIdentity(email);
-  if (!identity.domainAllowed) {
-    throw new Error('Scaler users only. Use @sst.scaler.com or @scaler.com');
-  }
-  const profile = profileFromIdentity(MOCK_UID, identity.email, {
-    fullName: fullName?.trim() || displayNameFromEmail(email),
-    phone: mockSession?.profile.phone ?? '',
-    phoneVerified: mockSession?.profile.phoneVerified ?? false,
-    photoUrl: mockSession?.profile.photoUrl ?? '',
-  });
-  profile.profileComplete = computeProfileComplete(profile);
-  mockSession = { profile, phoneCode: '123456', pendingPhone: mockSession?.pendingPhone };
-  return profile;
+  return persistProfile(profile);
 }
 
 export async function startPhoneVerification(phone) {
-  if (useMockAuth()) {
-    if (!mockSession) {
-      mockSession = { profile: emptyProfile(MOCK_UID), phoneCode: '123456' };
-    }
-    mockSession.pendingPhone = phone;
-    return { verificationId: 'mock-verification' };
+  const auth = getFirebaseAuth();
+  if (!auth.currentUser) throw new Error('Sign in with Google first');
+
+  const snapshot = await new Promise((resolve, reject) => {
+    verifyPhoneNumber(auth, phone).on(
+      'state_changed',
+      (snap) => {
+        if (snap.state === PhoneAuthState.CODE_SENT || snap.state === PhoneAuthState.AUTO_VERIFIED) {
+          resolve(snap);
+        }
+        if (snap.state === PhoneAuthState.ERROR) {
+          reject(mapAuthError(snap.error));
+        }
+      },
+      (err) => reject(mapAuthError(err))
+    );
+  });
+
+  if (!snapshot.verificationId) {
+    throw new Error('Firebase did not return a verification ID. Check Phone auth and the app SHA-1.');
   }
-  throw new Error(
-    'Phone OTP requires a native Firebase build or Cloud Function SMS. Enable mock auth or configure native phone auth.'
-  );
+
+  const autoVerified = snapshot.state === PhoneAuthState.AUTO_VERIFIED;
+  pendingPhone = {
+    verificationId: snapshot.verificationId,
+    autoCode: snapshot.code,
+    autoVerified,
+  };
+  return {
+    verificationId: snapshot.verificationId,
+    autoCode: snapshot.code,
+    autoVerified,
+  };
 }
 
 export async function confirmPhoneCode(verificationId, code, fullName) {
-  if (useMockAuth()) {
-    if (!mockSession) throw new Error('Sign in with Google first');
-    if (code.trim() !== mockSession.phoneCode) {
-      throw new Error('Invalid OTP. Use 123456 in mock mode.');
+  const auth = getFirebaseAuth();
+  if (!auth.currentUser) throw new Error('Sign in with Google first');
+
+  const id = verificationId || pendingPhone?.verificationId;
+  if (!id) throw new Error('Send OTP first');
+
+  try {
+    const credential = PhoneAuthProvider.credential(id, code.trim());
+    await linkWithCredential(auth.currentUser, credential);
+  } catch (error) {
+    const codeName = errorCode(error);
+    if (!codeName.includes('provider-already-linked')) {
+      throw mapAuthError(error);
     }
-    const phone = mockSession.pendingPhone ?? mockSession.profile.phone;
-    const profile = {
-      ...mockSession.profile,
-      fullName: fullName?.trim() || mockSession.profile.fullName,
-      phone,
-      phoneVerified: true,
-    };
-    profile.profileComplete = computeProfileComplete(profile);
-    mockSession.profile = profile;
-    return profile;
   }
 
-  const auth = getFirebaseAuth();
-  if (!auth?.currentUser) throw new Error('Sign in with Google first');
-  const credential = PhoneAuthProvider.credential(verificationId, code);
-  await linkWithCredential(auth.currentUser, credential);
-  const existing = (await loadProfile(auth.currentUser.uid)) ?? emptyProfile(auth.currentUser.uid);
+  pendingPhone = null;
+  let existing;
+  try {
+    existing = (await loadProfile(auth.currentUser.uid)) ?? profileFromAuthUser(auth.currentUser);
+  } catch (error) {
+    if (!isUnavailable(error)) throw mapAuthError(error);
+    existing = profileFromAuthUser(auth.currentUser);
+  }
   const profile = {
     ...existing,
     fullName: fullName?.trim() || existing.fullName,
     phone: auth.currentUser.phoneNumber ?? existing.phone,
     phoneVerified: true,
   };
-  profile.profileComplete = computeProfileComplete(profile);
-  await upsertProfile(profile);
-  return profile;
+  return persistProfile(profile);
 }
 
 export async function saveFullName(fullName) {
-  if (useMockAuth()) {
-    if (!mockSession) throw new Error('No session');
-    const profile = { ...mockSession.profile, fullName: fullName.trim() };
-    profile.profileComplete = computeProfileComplete(profile);
-    mockSession.profile = profile;
-    return profile;
-  }
   const auth = getFirebaseAuth();
-  if (!auth?.currentUser) throw new Error('Not signed in');
-  const existing = (await loadProfile(auth.currentUser.uid)) ?? emptyProfile(auth.currentUser.uid);
-  const profile = { ...existing, fullName: fullName.trim() };
-  profile.profileComplete = computeProfileComplete(profile);
-  await upsertProfile(profile);
-  return profile;
+  if (!auth.currentUser) throw new Error('Not signed in');
+  let existing;
+  try {
+    existing = (await loadProfile(auth.currentUser.uid)) ?? profileFromAuthUser(auth.currentUser);
+  } catch (error) {
+    if (!isUnavailable(error)) throw mapAuthError(error);
+    existing = profileFromAuthUser(auth.currentUser);
+  }
+  return persistProfile({ ...existing, fullName: fullName.trim() });
 }
 
 export async function signOut() {
-  if (useMockAuth()) {
-    mockSession = null;
-    return;
+  try {
+    await GoogleSignin.signOut();
+  } catch {
+    // Google session may not exist (cold start, revoked).
   }
-  const auth = getFirebaseAuth();
-  if (auth) await firebaseSignOut(auth);
-}
-
-export function getMockProfile() {
-  return mockSession?.profile ?? null;
-}
-
-const PLACEHOLDER_GOOGLE_CLIENT_ID = 'mock.apps.googleusercontent.com';
-
-export function useGoogleAuthRequest() {
-  const clientId = process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID;
-  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-  const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
-  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-
-  return Google.useAuthRequest({
-    clientId: clientId || webClientId || PLACEHOLDER_GOOGLE_CLIENT_ID,
-    iosClientId: iosClientId || PLACEHOLDER_GOOGLE_CLIENT_ID,
-    androidClientId: androidClientId || PLACEHOLDER_GOOGLE_CLIENT_ID,
-    webClientId: webClientId || PLACEHOLDER_GOOGLE_CLIENT_ID,
-    scopes: ['openid', 'profile', 'email'],
-  });
+  await firebaseSignOut(getFirebaseAuth());
 }
 
 async function assertScalerEmailRemote(email) {
@@ -241,5 +373,3 @@ async function assertScalerEmailRemote(email) {
     throw new Error(body?.error ?? 'Email domain rejected');
   }
 }
-
-export { PhoneAuthProvider };
