@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { HUB_SECTIONS } from '@/src/data/hubSections';
 import { colors, radii, spacing, typography } from '@/src/theme/tokens';
 
@@ -13,8 +13,21 @@ export default function HubDashboard() {
       <View style={styles.grid}>
         {HUB_SECTIONS.map((section) => (
           <View key={section.id} style={styles.card}>
-            <Text style={styles.cardTitle}>{section.title}</Text>
-            <Text style={styles.cardSub}>{section.subActions.length} actions</Text>
+            {section.art ? (
+              <View style={styles.cardArtWrap}>
+                <Image source={section.art} style={styles.cardArt} resizeMode="contain" />
+              </View>
+            ) : (
+              <View style={styles.cardArtFallback}>
+                <Text style={styles.cardFallbackText}>
+                  {section.id === 'photo-hub' ? 'PH' : 'RS'}
+                </Text>
+              </View>
+            )}
+            <View style={styles.cardCopy}>
+              <Text style={styles.cardTitle}>{section.title}</Text>
+              <Text style={styles.cardSub}>{section.subActions.length} actions</Text>
+            </View>
           </View>
         ))}
       </View>
@@ -38,7 +51,37 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.muted,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
+  cardArtWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  cardArt: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  cardArtFallback: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardFallbackText: {
+    ...typography.label,
+    color: colors.textSoft,
+  },
+  cardCopy: { flex: 1 },
   cardTitle: { ...typography.headline, fontSize: 17, color: colors.text },
   cardSub: { ...typography.caption, color: colors.textSoft, marginTop: 4 },
 });

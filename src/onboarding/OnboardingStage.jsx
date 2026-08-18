@@ -17,13 +17,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import {
-  completeMockGoogle,
   confirmPhoneCode,
-  signInWithGoogleIdToken,
+  signInWithGoogle,
   startPhoneVerification,
-  useGoogleAuthRequest,
 } from '@/src/lib/auth';
-import { useMockAuth } from '@/src/lib/firebase';
 import { useAuthStore } from '@/src/store/authStore';
 import { useReducedMotion } from '@/src/hooks/useReducedMotion';
 import { colors, idCard, spacing, typography } from '@/src/theme/tokens';
@@ -88,14 +85,12 @@ export function OnboardingStage() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
-  const mock = useMockAuth();
   const setProfile = useAuthStore((s) => s.setProfile);
   const setError = useAuthStore((s) => s.setError);
   const error = useAuthStore((s) => s.error);
 
   const [phase, setPhase] = useState('intro');
   const [card, setCard] = useState(cardFromProfile(null));
-  const [googleEmail, setGoogleEmail] = useState('ariyan.25bcs10115@sst.scaler.com');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [verificationId, setVerificationId] = useState(null);
@@ -111,8 +106,6 @@ export function OnboardingStage() {
   const punch = useSharedValue(1);
   const motionDamp = useSharedValue(1);
   const reduceMotionSV = useSharedValue(reducedMotion ? 1 : 0);
-
-  const [request, response, promptAsync] = useGoogleAuthRequest();
 
   const sheetHeight = Math.round(height * SHEET_RATIO);
   const cardWidth = Math.min(width * 0.78, 320);
@@ -228,58 +221,60 @@ export function OnboardingStage() {
     setTimeout(() => setPhase('otp'), reducedMotion ? 0 : 820);
   };
 
+  const finishIfComplete = (profile) => {
+    if (profile.profileComplete) {
+      router.replace('/(hub)');
+    }
+  };
+
   const applyGoogleProfile = (profile) => {
     setProfile(profile);
     setCard(cardFromProfile(profile));
-    setStatus(`Signed in as ${profile.email}`);
+    const syncNote =
+      profile.firestoreSynced === false
+        ? ' Profile will sync when Firestore is available.'
+        : '';
+    setStatus(`Signed in as ${profile.email}.${syncNote}`);
     onSuccessHaptic();
     punch.value = withSequence(
       withSpring(1.03, { duration: 280, dampingRatio: 0.72 }),
       withSpring(1, { duration: 320, dampingRatio: 0.8 })
     );
     lockOpen();
+    if (profile.phoneVerified) {
+      setTimeout(() => finishIfComplete(profile), reducedMotion ? 0 : 500);
+      return;
+    }
     setTimeout(flipCard, reducedMotion ? 0 : 700);
   };
 
-  useEffect(() => {
-    if (response?.type !== 'success') return;
-    const idToken = response.authentication?.idToken ?? response.params?.id_token;
-    if (!idToken) {
-      setError('Google sign-in did not return an ID token');
-      return;
-    }
-    (async () => {
-      try {
-        setBusy(true);
-        const profile = await signInWithGoogleIdToken(idToken);
-        applyGoogleProfile(profile);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Google sign-in failed');
-      } finally {
-        setBusy(false);
-      }
-    })();
-  }, [response]);
-
   const onGoogle = async () => {
     setError(null);
-    if (mock) {
-      try {
-        setBusy(true);
-        const profile = await completeMockGoogle(googleEmail);
-        applyGoogleProfile(profile);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Mock Google failed');
-      } finally {
-        setBusy(false);
-      }
-      return;
+    try {
+      setBusy(true);
+      const profile = await signInWithGoogle();
+      if (!profile) return;
+      applyGoogleProfile(profile);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Google sign-in failed');
+    } finally {
+      setBusy(false);
     }
-    if (!request) {
-      setError('Google OAuth is not configured. Set EXPO_PUBLIC_GOOGLE_* client IDs.');
-      return;
+  };
+
+  const completePhone = async (id, code) => {
+    const profile = await confirmPhoneCode(id, code, card.fullName);
+    setProfile(profile);
+    setCard(cardFromProfile(profile));
+    if (profile.profileComplete) {
+      router.replace('/(hub)');
+    } else {
+      const syncNote =
+        profile.firestoreSynced === false
+          ? ' Profile will sync when Firestore is available.'
+          : '';
+      setStatus(`Phone verified — finish Google + name to continue.${syncNote}`);
     }
-    await promptAsync();
   };
 
   const onSendOtp = async () => {
@@ -287,10 +282,15 @@ export function OnboardingStage() {
     try {
       setBusy(true);
       if (!phone.trim()) throw new Error('Enter phone number');
-      const { verificationId: id } = await startPhoneVerification(phone.trim());
-      setVerificationId(id);
-      setStatus(mock ? 'OTP sent. Use 123456' : 'OTP sent');
+      const result = await startPhoneVerification(phone.trim());
+      setVerificationId(result.verificationId);
+      if (result.autoVerified && result.autoCode) {
+        await completePhone(result.verificationId, result.autoCode);
+        return;
+      }
+      setStatus('OTP sent');
     } catch (e) {
+      setVerificationId(null);
       setError(e instanceof Error ? e.message : 'Failed to send OTP');
     } finally {
       setBusy(false);
@@ -302,35 +302,9 @@ export function OnboardingStage() {
     try {
       setBusy(true);
       if (!verificationId) throw new Error('Send OTP first');
-      const profile = await confirmPhoneCode(verificationId, otp, card.fullName);
-      setProfile(profile);
-      setCard(cardFromProfile(profile));
-      if (profile.profileComplete) {
-        router.replace('/(hub)');
-      } else {
-        setStatus('Phone verified — finish Google + name to continue');
-      }
+      await completePhone(verificationId, otp);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'OTP verification failed');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const onDevComplete = async () => {
-    if (!__DEV__) return;
-    try {
-      setBusy(true);
-      const profile = await completeMockGoogle(googleEmail || 'ariyan.25bcs10115@sst.scaler.com');
-      const verified = await confirmPhoneCode(
-        (await startPhoneVerification(phone.trim() || '+919999999999')).verificationId,
-        '123456',
-        profile.fullName
-      );
-      setProfile(verified);
-      router.replace('/(hub)');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Dev complete failed');
     } finally {
       setBusy(false);
     }
@@ -375,7 +349,7 @@ export function OnboardingStage() {
             ]}
             pointerEvents="none"
           >
-            <Text style={styles.heroKicker}>Scaler Hub</Text>
+            <Text style={styles.heroKicker}>ScalerOne</Text>
             <Text style={styles.heroTitle}>Your campus ID</Text>
             <Text style={styles.heroSub}>Swipe up to continue</Text>
             <SwipeHint />
@@ -401,11 +375,7 @@ export function OnboardingStage() {
       {showGoogle ? (
         <AuthSheet height={sheetHeight}>
           <GoogleSheet
-            mock={mock}
-            googleEmail={googleEmail}
-            onChangeEmail={setGoogleEmail}
             onGoogle={onGoogle}
-            onDevComplete={onDevComplete}
             busy={busy}
             error={error}
             status={status}
@@ -416,7 +386,6 @@ export function OnboardingStage() {
       {showOtp ? (
         <AuthSheet height={sheetHeight}>
           <PhoneOtpSheet
-            mock={mock}
             phone={phone}
             otp={otp}
             onChangePhone={setPhone}
@@ -452,8 +421,7 @@ const styles = StyleSheet.create({
   heroKicker: {
     ...typography.label,
     color: colors.accent,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
+    letterSpacing: 0.4,
   },
   heroTitle: {
     ...typography.title,
