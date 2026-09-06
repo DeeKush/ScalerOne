@@ -48,7 +48,9 @@
           "resizeMode": "contain",
           "backgroundColor": "#F7F9FC"
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker",
+      "expo-sqlite"
     ]
   }
 }
