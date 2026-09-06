@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { formatRelativeTime } from '@/src/lib/lostFound/relativeTime';
 import { colors, fonts, radii, spacing, typography } from '@/src/theme/tokens';
 
@@ -15,9 +15,19 @@ export function ItemCard({ item }) {
 
   return (
     <View style={[styles.card, item.status === 'resolved' && styles.resolved]}>
-      <View style={[styles.thumb, { backgroundColor: isLost ? colors.danger : colors.success }]}>
-        <Text style={styles.thumbGlyph}>{isLost ? 'L' : 'F'}</Text>
-      </View>
+      {item.photoUrl ? (
+        <Image source={{ uri: item.photoUrl }} style={styles.thumb} resizeMode="cover" />
+      ) : (
+        <View
+          style={[
+            styles.thumb,
+            styles.thumbFallback,
+            { backgroundColor: isLost ? colors.danger : colors.success },
+          ]}
+        >
+          <Text style={styles.thumbGlyph}>{isLost ? 'L' : 'F'}</Text>
+        </View>
+      )}
 
       <View style={styles.body}>
         <View style={styles.titleRow}>
@@ -63,6 +73,8 @@ const styles = StyleSheet.create({
     width: THUMB_SIZE,
     height: THUMB_SIZE,
     borderRadius: radii.md,
+  },
+  thumbFallback: {
     alignItems: 'center',
     justifyContent: 'center',
   },
