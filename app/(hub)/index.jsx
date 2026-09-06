@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { HUB_SECTIONS } from '@/src/data/hubSections';
 import { colors, radii, spacing, typography } from '@/src/theme/tokens';
 
@@ -13,8 +13,15 @@ export default function HubDashboard() {
       <View style={styles.grid}>
         {HUB_SECTIONS.map((section) => (
           <View key={section.id} style={styles.card}>
-            <Text style={styles.cardTitle}>{section.title}</Text>
-            <Text style={styles.cardSub}>{section.subActions.length} actions</Text>
+            {section.art ? (
+              <Image source={section.art} style={styles.cardArt} resizeMode="contain" />
+            ) : (
+              <View style={styles.cardArtFallback} />
+            )}
+            <View style={styles.cardText}>
+              <Text style={styles.cardTitle}>{section.title}</Text>
+              <Text style={styles.cardSub}>{section.subActions.length} actions</Text>
+            </View>
           </View>
         ))}
       </View>
@@ -33,12 +40,26 @@ const styles = StyleSheet.create({
   sub: { ...typography.body, color: colors.textSoft },
   grid: { gap: spacing.sm, marginTop: spacing.md },
   card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.muted,
   },
+  cardArt: {
+    width: 44,
+    height: 44,
+  },
+  cardArtFallback: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceMuted,
+  },
+  cardText: { flex: 1 },
   cardTitle: { ...typography.headline, fontSize: 17, color: colors.text },
   cardSub: { ...typography.caption, color: colors.textSoft, marginTop: 4 },
 });

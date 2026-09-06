@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react';
 import {
   FlatList,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -46,6 +47,18 @@ function glyph(name) {
   return map[name] ?? '•';
 }
 
+/** Tile artwork when the section has it, otherwise the original text glyph. */
+function SectionGlyph({ section, active }) {
+  if (section?.art) {
+    return <Image source={section.art} style={styles.iconArt} resizeMode="contain" />;
+  }
+  return (
+    <Text style={[styles.iconGlyph, active && styles.iconGlyphActive]}>
+      {glyph(section?.icon)}
+    </Text>
+  );
+}
+
 export function FloatingHubNav() {
   const router = useRouter();
   const reduced = useReducedMotion();
@@ -74,7 +87,7 @@ export function FloatingHubNav() {
   const onRootPress = (item) => {
     morph.value = reduced ? 1 : withSpring(1, SPRING);
     enterSection(item.id);
-    router.push(`/(hub)/section/${item.id}`);
+    router.push(item.route ?? `/(hub)/section/${item.id}`);
   };
 
   const onHome = () => {
@@ -83,14 +96,15 @@ export function FloatingHubNav() {
     router.replace('/(hub)');
   };
 
-  const onSubPress = (index) => {
+  const onSubPress = (index, subAction) => {
     setActiveSubIndex(index % (section?.subActions.length ?? 1));
+    if (subAction?.route) router.push(subAction.route);
   };
 
   const renderRoot = ({ item }) => (
     <Pressable style={styles.iconHit} onPress={() => onRootPress(item)}>
-      <View style={styles.iconOuter}>
-        <Text style={styles.iconGlyph}>{glyph(item.icon)}</Text>
+      <View style={[styles.iconOuter, item.art && styles.iconOuterArt]}>
+        <SectionGlyph section={item} />
       </View>
       <Text style={styles.iconCaption} numberOfLines={1}>
         {item.title}
@@ -126,7 +140,7 @@ export function FloatingHubNav() {
             const logical = index % section.subActions.length;
             const active = logical === activeSubIndex;
             return (
-              <Pressable style={styles.iconHit} onPress={() => onSubPress(logical)}>
+              <Pressable style={styles.iconHit} onPress={() => onSubPress(logical, item)}>
                 <View style={[styles.iconOuter, active && styles.iconOuterActive]}>
                   {active ? <View style={styles.pill} /> : null}
                   <Text style={[styles.iconGlyph, active && styles.iconGlyphActive]}>
@@ -206,6 +220,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  iconOuterArt: {
+    backgroundColor: colors.surface,
+  },
+  iconArt: {
+    width: ICON_SIZE - 8,
+    height: ICON_SIZE - 8,
+    borderRadius: (ICON_SIZE - 8) / 2,
   },
   iconOuterActive: {},
   pill: {
