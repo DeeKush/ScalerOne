@@ -98,7 +98,13 @@ export function FloatingHubNav() {
 
   const onSubPress = (index, subAction) => {
     setActiveSubIndex(index % (section?.subActions.length ?? 1));
-    if (subAction?.route) router.push(subAction.route);
+    if (subAction?.route) {
+      router.push(subAction.route);
+      return;
+    }
+    // Unbuilt module: land on its "Coming soon" screen rather than no-op.
+    // replace(), not push(), since that screen is usually already on top.
+    if (section) router.replace(`/(hub)/section/${section.id}`);
   };
 
   const renderRoot = ({ item }) => (

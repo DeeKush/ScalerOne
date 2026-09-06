@@ -1,18 +1,32 @@
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { HUB_SECTIONS } from '@/src/data/hubSections';
+import { useNavStore } from '@/src/store/navStore';
 import { colors, radii, spacing, typography } from '@/src/theme/tokens';
 
 export default function HubDashboard() {
+  const router = useRouter();
+  const enterSection = useNavStore((s) => s.enterSection);
+
   return (
     <ScrollView contentContainerStyle={styles.content} style={styles.root}>
       <Text style={styles.title}>Dashboard</Text>
       <Text style={styles.sub}>
-        Placeholder home. Pick a module from the floating nav — content modules ship after the motion
-        MVP.
+        Pick a module below or from the floating nav. Lost &amp; Found is live; the rest are on the
+        way.
       </Text>
       <View style={styles.grid}>
         {HUB_SECTIONS.map((section) => (
-          <View key={section.id} style={styles.card}>
+          <Pressable
+            key={section.id}
+            style={styles.card}
+            onPress={() => {
+              enterSection(section.id);
+              router.push(section.route ?? `/(hub)/section/${section.id}`);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`Open ${section.title}`}
+          >
             {section.art ? (
               <Image source={section.art} style={styles.cardArt} resizeMode="contain" />
             ) : (
@@ -22,7 +36,7 @@ export default function HubDashboard() {
               <Text style={styles.cardTitle}>{section.title}</Text>
               <Text style={styles.cardSub}>{section.subActions.length} actions</Text>
             </View>
-          </View>
+          </Pressable>
         ))}
       </View>
     </ScrollView>
