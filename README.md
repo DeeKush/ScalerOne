@@ -45,7 +45,7 @@ This is a **release** APK with JS bundled inside. It keeps working after you unp
 
 ## Firebase setup
 
-1. Firebase project **scalerone-746d8**; enable **Google** and **Phone** auth.
+1. Firebase project **scalerone-746d8**; enable **Google** and **Phone** under [Authentication → Sign-in method](https://console.firebase.google.com/project/scalerone-746d8/authentication/providers). MCP cannot turn Phone on. `auth/operation-not-allowed` after Google means Phone is still off. SMS usually needs **Blaze** billing (this project currently has billing off).
 2. Android app package **`com.scaler.hub`**. Download `google-services.json` to the project root (gitignored).
 3. **Create the default Firestore database** if it does not exist: Firebase Console → Firestore Database → Create database. Database ID must be the nameless **`(default)`** (pick a region, e.g. `asia-south1`). The app cannot invent a live database. `firestore/unavailable` after Google sign-in almost always means this step was skipped, or the device cannot reach Google.
 4. Web OAuth client in Google Cloud = `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` (must match the type 3 client inside `google-services.json`).

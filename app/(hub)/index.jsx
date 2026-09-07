@@ -1,6 +1,6 @@
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { HUB_SECTIONS } from '@/src/data/hubSections';
-import { colors, radii, spacing, typography } from '@/src/theme/tokens';
+import { colors, radii, shadows, spacing, typography } from '@/src/theme/tokens';
 
 export default function HubDashboard() {
   return (
@@ -47,19 +47,20 @@ const styles = StyleSheet.create({
   grid: { gap: spacing.sm, marginTop: spacing.md },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radii.lg,
+    borderRadius: radii.card,
     padding: spacing.md,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.muted,
+    borderColor: colors.line,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+    ...shadows.card,
   },
   cardArtWrap: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',

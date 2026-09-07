@@ -1,27 +1,54 @@
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useEffect } from 'react';
+import { Keyboard, Platform, StyleSheet, View } from 'react-native';
+import Animated, {
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii, spacing } from '@/src/theme/tokens';
+import { GlassSurface } from '@/src/hub/GlassSurface';
+import { colors, radii, shadows, spacing } from '@/src/theme/tokens';
 
 export function AuthSheet({ children, height }) {
   const insets = useSafeAreaInsets();
+  const lift = useSharedValue(0);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const onShow = Keyboard.addListener(showEvent, (event) => {
+      const next = event.endCoordinates?.height ?? 0;
+      lift.value = withTiming(next, { duration: Platform.OS === 'ios' ? 250 : 180 });
+    });
+    const onHide = Keyboard.addListener(hideEvent, () => {
+      lift.value = withTiming(0, { duration: Platform.OS === 'ios' ? 250 : 180 });
+    });
+    return () => {
+      onShow.remove();
+      onHide.remove();
+    };
+  }, [lift]);
+
+  const sheetMotion = useAnimatedStyle(() => ({
+    transform: [{ translateY: -lift.value }],
+  }));
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.avoid}
-    >
-      <Animated.View
-        entering={FadeInDown.duration(400)}
-        style={[
-          styles.panel,
-          { minHeight: height, paddingBottom: Math.max(insets.bottom, spacing.md) },
-        ]}
-      >
-        <View style={styles.handle} />
-        <View style={styles.body}>{children}</View>
+    <Animated.View style={[styles.avoid, sheetMotion]}>
+      <Animated.View entering={FadeInDown.duration(400)} style={shadows.sheet}>
+        <GlassSurface
+          intensity={18}
+          style={[
+            styles.panel,
+            { minHeight: height, paddingBottom: Math.max(insets.bottom, spacing.md) },
+          ]}
+        >
+          <View style={styles.handle} />
+          <View style={styles.body}>{children}</View>
+        </GlassSurface>
       </Animated.View>
-    </KeyboardAvoidingView>
+    </Animated.View>
   );
 }
 
@@ -33,20 +60,17 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   panel: {
-    backgroundColor: 'rgba(255,255,255,0.96)',
+    backgroundColor: colors.sheetFill,
     borderTopLeftRadius: radii.sheet,
     borderTopRightRadius: radii.sheet,
-    shadowColor: '#0B1220',
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: -8 },
-    elevation: 18,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
   handle: {
     alignSelf: 'center',
-    width: 40,
-    height: 4,
-    borderRadius: 2,
+    width: 44,
+    height: 5,
+    borderRadius: 3,
     backgroundColor: colors.line,
     marginTop: 10,
     marginBottom: 4,

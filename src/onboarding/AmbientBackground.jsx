@@ -49,17 +49,19 @@ export function AmbientBackground() {
     );
   }, [reduced, a, b]);
 
+  const amp = reduced ? 0.5 : 1;
+
   const blobA = useAnimatedStyle(() => ({
     transform: [
-      { translateX: a.value * 36 - 18 },
-      { translateY: a.value * 28 - 14 },
+      { translateX: (a.value * 36 - 18) * amp },
+      { translateY: (a.value * 28 - 14) * amp },
     ],
   }));
 
   const blobB = useAnimatedStyle(() => ({
     transform: [
-      { translateX: b.value * -40 + 20 },
-      { translateY: b.value * 32 - 16 },
+      { translateX: (b.value * -40 + 20) * amp },
+      { translateY: (b.value * 32 - 16) * amp },
     ],
   }));
 
@@ -75,14 +77,14 @@ export function AmbientBackground() {
         size={width * 0.92}
         cx={0.42}
         cy={0.48}
-        opacity={0.14}
+        opacity={0.2}
         style={[blobA, { top: height * 0.02, left: -width * 0.22 }]}
       />
       <DriftingBlob
         size={width * 0.84}
         cx={0.55}
         cy={0.52}
-        opacity={0.1}
+        opacity={0.16}
         style={[blobB, { bottom: height * 0.08, right: -width * 0.24 }]}
       />
     </View>

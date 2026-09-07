@@ -263,9 +263,10 @@ export function OnboardingStage() {
   };
 
   const completePhone = async (id, code) => {
-    const profile = await confirmPhoneCode(id, code, card.fullName);
+    const profile = await confirmPhoneCode(id, code, card.fullName, phone);
     setProfile(profile);
     setCard(cardFromProfile(profile));
+    onSuccessHaptic();
     if (profile.profileComplete) {
       router.replace('/(hub)');
     } else {
@@ -281,14 +282,15 @@ export function OnboardingStage() {
     setError(null);
     try {
       setBusy(true);
-      if (!phone.trim()) throw new Error('Enter phone number');
-      const result = await startPhoneVerification(phone.trim());
+      if (!phone.trim()) throw new Error('Enter a 10-digit Indian mobile number.');
+      const result = await startPhoneVerification(phone);
       setVerificationId(result.verificationId);
       if (result.autoVerified && result.autoCode) {
         await completePhone(result.verificationId, result.autoCode);
         return;
       }
       setStatus('OTP sent');
+      onSuccessHaptic();
     } catch (e) {
       setVerificationId(null);
       setError(e instanceof Error ? e.message : 'Failed to send OTP');
@@ -301,8 +303,27 @@ export function OnboardingStage() {
     setError(null);
     try {
       setBusy(true);
-      if (!verificationId) throw new Error('Send OTP first');
-      await completePhone(verificationId, otp);
+      if (phone.replace(/\D/g, '').length !== 10) {
+        throw new Error('Enter a 10-digit Indian mobile number.');
+      }
+      if (otp.length !== 6) throw new Error('Enter the 6-digit OTP.');
+
+      let id = verificationId;
+      if (!id) {
+        try {
+          const result = await startPhoneVerification(phone);
+          id = result.verificationId;
+          setVerificationId(id);
+          if (result.autoVerified && result.autoCode) {
+            await completePhone(id, result.autoCode);
+            return;
+          }
+        } catch {
+          id = null;
+        }
+      }
+
+      await completePhone(id, otp);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'OTP verification failed');
     } finally {
@@ -395,7 +416,6 @@ export function OnboardingStage() {
             busy={busy}
             error={error}
             status={status}
-            sent={Boolean(verificationId)}
           />
         </AuthSheet>
       ) : null}

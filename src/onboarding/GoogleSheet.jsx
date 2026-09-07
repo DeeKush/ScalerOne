@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
+import { usePressAnimation } from '@/src/hooks/usePressAnimation';
 import { colors, radii, spacing, typography } from '@/src/theme/tokens';
 
 function GoogleMark() {
@@ -26,21 +28,27 @@ function GoogleMark() {
 }
 
 export function GoogleSheet({ onGoogle, busy, error, status }) {
+  const press = usePressAnimation(0.98);
+
   return (
     <View style={styles.sheet}>
       <Text style={styles.kicker}>ScalerOne</Text>
       <Text style={styles.title}>Sign in with Google</Text>
       <Text style={styles.sub}>Scaler accounts only · @sst.scaler.com or @scaler.com</Text>
 
-      <Pressable
-        style={[styles.googleBtn, busy && styles.disabled]}
-        onPress={onGoogle}
-        disabled={busy}
-        accessibilityRole="button"
-      >
-        <GoogleMark />
-        <Text style={styles.googleLabel}>Sign in with Google</Text>
-      </Pressable>
+      <Animated.View style={press.animatedStyle}>
+        <Pressable
+          style={[styles.googleBtn, busy && styles.disabled]}
+          onPress={onGoogle}
+          onPressIn={busy ? undefined : press.onPressIn}
+          onPressOut={press.onPressOut}
+          disabled={busy}
+          accessibilityRole="button"
+        >
+          <GoogleMark />
+          <Text style={styles.googleLabel}>Sign in with Google</Text>
+        </Pressable>
+      </Animated.View>
 
       {status ? <Text style={styles.status}>{status}</Text> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -75,7 +83,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     minHeight: 52,
     backgroundColor: colors.surface,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.line,
     paddingVertical: 14,
@@ -84,6 +92,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 10,
+    shadowColor: '#1A2744',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
   },
   googleLabel: {
     ...typography.label,

@@ -19,10 +19,16 @@ export const colors = {
   line: '#E2E8F0',
   accentSoft: 'rgba(74, 144, 226, 0.18)',
   glass: 'rgba(255, 255, 255, 0.72)',
+  glassAndroid: 'rgba(255, 255, 255, 0.94)',
   glassBorder: 'rgba(255, 255, 255, 0.55)',
+  sheetFill: 'rgba(255, 255, 255, 0.97)',
+  white: '#FFFFFF',
   danger: '#D64545',
   success: '#2F9E6B',
 };
+
+export const bgPage = colors.bg;
+export const accentPrimary = colors.accent;
 
 export const idCard = {
   header: '#2F6FE4',
@@ -50,6 +56,30 @@ export const radii = {
   card: 18,
   sheet: 28,
   pill: 999,
+};
+
+export const shadows = {
+  card: {
+    shadowColor: idCard.navy,
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  sheet: {
+    shadowColor: idCard.navy,
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 10,
+  },
+  nav: {
+    shadowColor: idCard.navy,
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
 };
 
 export const typography = {

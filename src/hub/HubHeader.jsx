@@ -4,7 +4,7 @@ import { GlassSurface } from '@/src/hub/GlassSurface';
 import { getSection } from '@/src/data/hubSections';
 import { useAuthStore } from '@/src/store/authStore';
 import { useNavStore } from '@/src/store/navStore';
-import { colors, fonts, spacing, typography } from '@/src/theme/tokens';
+import { colors, fonts, shadows, spacing, typography } from '@/src/theme/tokens';
 
 export function HubHeader({ onProfilePress }) {
   const insets = useSafeAreaInsets();
@@ -20,6 +20,7 @@ export function HubHeader({ onProfilePress }) {
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + spacing.xs }]}>
+      <View style={shadows.nav}>
       <GlassSurface style={styles.bar}>
         <Text style={styles.title} numberOfLines={1}>
           {title}
@@ -35,6 +36,7 @@ export function HubHeader({ onProfilePress }) {
           </Text>
         </Pressable>
       </GlassSurface>
+      </View>
     </View>
   );
 }
@@ -68,7 +70,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: {
-    color: '#fff',
+    color: colors.white,
     fontFamily: fonts.bold,
   },
 });

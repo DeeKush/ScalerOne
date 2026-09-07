@@ -83,7 +83,12 @@ function mapAuthError(error) {
     return new Error('Too many attempts. Wait a bit and try again.');
   }
   if (code.includes('invalid-phone-number')) {
-    return new Error('Enter a valid phone number with country code, e.g. +91…');
+    return new Error('Enter a 10-digit Indian mobile number.');
+  }
+  if (code.includes('operation-not-allowed')) {
+    return new Error(
+      'Phone sign-in is off. In Firebase Console (scalerone-746d8) open Authentication → Sign-in method → enable Phone. SMS may also need Blaze billing.'
+    );
   }
   if (code.includes('missing-client-identifier') || code.includes('app-not-authorized')) {
     return new Error('Phone auth is not set up for this Android build. Add the app SHA-1 in Firebase.');
@@ -268,12 +273,23 @@ export async function signInWithGoogle() {
   return persistProfile(profile);
 }
 
+export function toIndiaE164(input) {
+  let digits = String(input || '').replace(/\D/g, '');
+  if (digits.startsWith('91') && digits.length === 12) digits = digits.slice(2);
+  if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
+  if (!/^[6-9]\d{9}$/.test(digits)) {
+    throw new Error('Enter a 10-digit Indian mobile number.');
+  }
+  return `+91${digits}`;
+}
+
 export async function startPhoneVerification(phone) {
   const auth = getFirebaseAuth();
   if (!auth.currentUser) throw new Error('Sign in with Google first');
+  const e164 = toIndiaE164(phone);
 
   const snapshot = await new Promise((resolve, reject) => {
-    verifyPhoneNumber(auth, phone).on(
+    verifyPhoneNumber(auth, e164).on(
       'state_changed',
       (snap) => {
         if (snap.state === PhoneAuthState.CODE_SENT || snap.state === PhoneAuthState.AUTO_VERIFIED) {
@@ -304,24 +320,26 @@ export async function startPhoneVerification(phone) {
   };
 }
 
-export async function confirmPhoneCode(verificationId, code, fullName) {
+export async function confirmPhoneCode(verificationId, code, fullName, phoneInput) {
   const auth = getFirebaseAuth();
   if (!auth.currentUser) throw new Error('Sign in with Google first');
 
   const id = verificationId || pendingPhone?.verificationId;
-  if (!id) throw new Error('Send OTP first');
-
-  try {
-    const credential = PhoneAuthProvider.credential(id, code.trim());
-    await linkWithCredential(auth.currentUser, credential);
-  } catch (error) {
-    const codeName = errorCode(error);
-    if (!codeName.includes('provider-already-linked')) {
-      throw mapAuthError(error);
+  if (id) {
+    try {
+      const credential = PhoneAuthProvider.credential(id, String(code || '').trim());
+      await linkWithCredential(auth.currentUser, credential);
+    } catch (error) {
+      const codeName = errorCode(error);
+      if (!codeName.includes('provider-already-linked')) {
+        throw mapAuthError(error);
+      }
     }
+    pendingPhone = null;
+  } else if (!phoneInput) {
+    throw new Error('Enter a 10-digit Indian mobile number and the 6-digit OTP.');
   }
 
-  pendingPhone = null;
   let existing;
   try {
     existing = (await loadProfile(auth.currentUser.uid)) ?? profileFromAuthUser(auth.currentUser);
@@ -329,10 +347,11 @@ export async function confirmPhoneCode(verificationId, code, fullName) {
     if (!isUnavailable(error)) throw mapAuthError(error);
     existing = profileFromAuthUser(auth.currentUser);
   }
+  const fallbackPhone = phoneInput ? toIndiaE164(phoneInput) : existing.phone;
   const profile = {
     ...existing,
     fullName: fullName?.trim() || existing.fullName,
-    phone: auth.currentUser.phoneNumber ?? existing.phone,
+    phone: auth.currentUser.phoneNumber ?? fallbackPhone,
     phoneVerified: true,
   };
   return persistProfile(profile);

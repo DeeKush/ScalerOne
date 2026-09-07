@@ -13,7 +13,7 @@
 | 0–5 Motion MVP | Done (replaced by ID-card swipe-up) |
 | JS conversion + folder cleanup | Done |
 | ID-card onboarding (swipe → Google → flip → OTP) | Done |
-| Native Google + phone OTP (RN Firebase) | Done (needs `google-services.json` + SHA-1 + Firestore) |
+| Native Google + phone OTP (RN Firebase) | Done (enable **Phone** in Auth; SMS may need Blaze) |
 | Standalone tester APK (`npm run apk`) | Done (arm64; rebuild after native modules / icons) |
 | Product rename to ScalerOne | Done (package `com.scaler.hub` unchanged) |
 
