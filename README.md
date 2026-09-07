@@ -1,46 +1,36 @@
-# Scaler Hub
+# ScalerOne
 
-React Native (Expo SDK 54) campus hub — JavaScript. Android testers install a standalone APK; the phone does not need USB or Metro.
+React Native (Expo SDK 54) campus hub — JavaScript. Auth uses the **Firebase JS SDK** + `expo-auth-session` so Google works in the **web preview**. Native `@react-native-google-signin` is not used (it shows a Play Services error in the browser).
 
-**Flow:** swipe-up ID card → Google → card fills and flips → phone OTP → hub.
+**Flow:** swipe-up ID card → Google → card fills and flips → phone OTP → hub. Lost & Found is the first live module.
 
-## Tester APK (recommended)
-
-On a machine with Android SDK (`ANDROID_HOME`, usually `~/Library/Android/sdk`):
+## Web preview
 
 ```bash
 cp .env.example .env
 npm install
+npm run web
+```
+
+Default `.env` uses **mock auth**. Continue with a Scaler email, then Submit OTP with **`123456`** (Send OTP is optional).
+
+For real Google on web: fill `EXPO_PUBLIC_FIREBASE_*` and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, set `EXPO_PUBLIC_USE_MOCK_AUTH=false`.
+
+## Tester APK (sideload, no Metro)
+
+```bash
 npm run apk
 ```
 
-That writes **`dist/ScalerHub-preview.apk`**. Send the file (Drive, WhatsApp, AirDrop). On the phone: open the file → Install → allow unknown sources if asked → open **Scaler Hub**.
+Install `dist/ScalerHub-preview.apk` (or `ScalerOne-preview.apk` if the build script copies that name). Package stays `com.scaler.hub`.
 
-This is a **release** APK with JS bundled inside. It keeps working after you unplug USB and after you quit Metro.
-
-## Dev (optional)
-
-```bash
-cp .env.example .env
-npm install
-npx expo start -c
-```
-
-Expo Go 54, or USB debug:
-
-```bash
-npx expo run:android
-```
-
-Debug USB builds talk to Metro. Unplug the cable (or stop Metro) and that install will not run. Use `npm run apk` for a shareable tester build.
-
-### Dev demo path
+## Dev demo path
 
 1. Swipe the ID card up.
 2. Mock Google uses the email field (`@sst.scaler.com` or `@scaler.com`).
-3. Front fills (name + student ID from the email), then the card flips.
-4. Send OTP; mock code is **`123456`**.
-5. Or tap **Dev: complete profile → Hub**.
+3. Front fills, then the card flips.
+4. Enter a 10-digit number and OTP **`123456`**, then **Submit OTP** (Send is optional).
+5. Or tap **Dev: skip to Hub**.
 
 ## Theme (Academic Blue)
 
@@ -53,20 +43,13 @@ Debug USB builds talk to Metro. Unplug the cable (or stop Metro) and that instal
 
 ## Firebase setup
 
-1. Create a Firebase project; enable **Google** and **Phone** auth.
+1. Create a Firebase project; enable **Google** (and **Phone** if you will use native SMS).
 2. Add a web app; copy config into `.env` (`EXPO_PUBLIC_FIREBASE_*`).
-3. Create OAuth client IDs (Google Cloud) for Expo / iOS / Android / Web → `EXPO_PUBLIC_GOOGLE_*`.
+3. Create OAuth client IDs → `EXPO_PUBLIC_GOOGLE_*`.
 4. Set `EXPO_PUBLIC_USE_MOCK_AUTH=false`.
-5. Deploy domain gate:
+5. Optional domain gate: deploy `assertScalerEmail` and set `EXPO_PUBLIC_FUNCTIONS_URL`.
 
-```bash
-cd functions && npm install && npm run build
-# firebase deploy --only functions:assertScalerEmail
-```
-
-Set `EXPO_PUBLIC_FUNCTIONS_URL` to the functions base URL.
-
-**Phone OTP on Expo Go:** Firebase JS phone auth needs a native ApplicationVerifier. Use mock auth for Expo Go; use a release APK / dev client for production phone linking.
+**Phone OTP on web:** Firebase JS phone auth needs a native ApplicationVerifier. Use mock auth in the browser. Lost & Found uses on-device SQLite (`EXPO_PUBLIC_LOSTFOUND_BACKEND=local`).
 
 ## Email identity
 
@@ -76,9 +59,10 @@ Set `EXPO_PUBLIC_FUNCTIONS_URL` to the functions base URL.
 ## Scripts
 
 ```bash
-npm run apk                 # standalone Android APK → dist/ScalerHub-preview.apk
-npx expo start -c           # Metro (debug only)
-npx expo run:android        # USB debug (needs Metro)
+npm run web                 # browser preview
+npm start                   # Metro (expo start)
+npm run apk                 # standalone Android APK
+npx expo run:android        # USB debug
 npm run test:identity
 ```
 

@@ -286,11 +286,15 @@ export function OnboardingStage() {
     setError(null);
     try {
       setBusy(true);
-      if (!phone.trim()) throw new Error('Enter phone number');
-      const { verificationId: id } = await startPhoneVerification(phone.trim());
+      if (phone.replace(/\D/g, '').length !== 10) {
+        throw new Error('Enter a 10-digit Indian mobile number.');
+      }
+      const { verificationId: id } = await startPhoneVerification(phone);
       setVerificationId(id);
       setStatus(mock ? 'OTP sent. Use 123456' : 'OTP sent');
+      onSuccessHaptic();
     } catch (e) {
+      setVerificationId(null);
       setError(e instanceof Error ? e.message : 'Failed to send OTP');
     } finally {
       setBusy(false);
@@ -301,10 +305,26 @@ export function OnboardingStage() {
     setError(null);
     try {
       setBusy(true);
-      if (!verificationId) throw new Error('Send OTP first');
-      const profile = await confirmPhoneCode(verificationId, otp, card.fullName);
+      if (phone.replace(/\D/g, '').length !== 10) {
+        throw new Error('Enter a 10-digit Indian mobile number.');
+      }
+      if (otp.length !== 6) throw new Error('Enter the 6-digit OTP.');
+
+      let id = verificationId;
+      if (!id) {
+        try {
+          const result = await startPhoneVerification(phone);
+          id = result.verificationId;
+          setVerificationId(id);
+        } catch {
+          id = null;
+        }
+      }
+
+      const profile = await confirmPhoneCode(id, otp, card.fullName, phone);
       setProfile(profile);
       setCard(cardFromProfile(profile));
+      onSuccessHaptic();
       if (profile.profileComplete) {
         router.replace('/(hub)');
       } else {
@@ -323,9 +343,11 @@ export function OnboardingStage() {
       setBusy(true);
       const profile = await completeMockGoogle(googleEmail || 'ariyan.25bcs10115@sst.scaler.com');
       const verified = await confirmPhoneCode(
-        (await startPhoneVerification(phone.trim() || '+919999999999')).verificationId,
+        (await startPhoneVerification(phone.replace(/\D/g, '').length === 10 ? phone : '9876543210'))
+          .verificationId,
         '123456',
-        profile.fullName
+        profile.fullName,
+        phone.replace(/\D/g, '').length === 10 ? phone : '9876543210'
       );
       setProfile(verified);
       router.replace('/(hub)');
@@ -375,7 +397,7 @@ export function OnboardingStage() {
             ]}
             pointerEvents="none"
           >
-            <Text style={styles.heroKicker}>Scaler Hub</Text>
+            <Text style={styles.heroKicker}>ScalerOne</Text>
             <Text style={styles.heroTitle}>Your campus ID</Text>
             <Text style={styles.heroSub}>Swipe up to continue</Text>
             <SwipeHint />
@@ -416,7 +438,6 @@ export function OnboardingStage() {
       {showOtp ? (
         <AuthSheet height={sheetHeight}>
           <PhoneOtpSheet
-            mock={mock}
             phone={phone}
             otp={otp}
             onChangePhone={setPhone}
@@ -426,7 +447,6 @@ export function OnboardingStage() {
             busy={busy}
             error={error}
             status={status}
-            sent={Boolean(verificationId)}
           />
         </AuthSheet>
       ) : null}

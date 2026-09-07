@@ -1,6 +1,6 @@
-# Scaler Hub — Progress Tracker
+# ScalerOne — Progress Tracker
 
-**Status:** Lost & Found module complete on **Expo SDK 54** (JavaScript)  
+**Status:** Lost & Found + JS Firebase web auth + fluid hub nav on **Expo SDK 54** (JavaScript)  
 **Last updated:** 2026-09-07
 
 ---
@@ -13,6 +13,8 @@
 | 0–5 Motion MVP | Done (replaced by ID-card swipe-up) |
 | JS conversion + folder cleanup | Done |
 | ID-card onboarding (swipe → Google → flip → OTP) | Done |
+| JS Firebase + expo-auth-session (web Google) | Done |
+| Fluid hub nav / press motion / Submit OTP without send | Done |
 | Standalone tester APK (`npm run apk`) | Done |
 | **Lost & Found module** | **Done** |
 | Marketplace module | Next |
@@ -43,6 +45,7 @@ Zustand for local UI state only.
 |---|---|
 | Utility tile icons (4 of 6 modules) | Done |
 | Every nav control goes somewhere deliberate | Done |
+| Looping floating nav + SVG bump | Done |
 
 Tile art lives in `assets/images/hub/` and is wired through `HUB_ART` in
 `hubSections.js`. Room Swap and Photo Hub have no art yet and fall back to the
@@ -87,30 +90,29 @@ page is cross-origin isolated — expo-sqlite's web backend needs
 Also worth knowing: `Alert.alert` is a **no-op** on react-native-web, so it must
 never be the only way an error is surfaced. Failures render inline instead.
 
+Google on web uses Firebase JS + `expo-auth-session`. Do not use
+`@react-native-google-signin` in the browser (Play Services error).
+
 ---
 
 ## How to run
 
+```bash
+npm install
+npm run web
+```
+
 Tester APK (no USB):
 
 ```bash
-npm install
 npm run apk
-```
-
-Install `dist/ScalerHub-preview.apk` on the phone.
-
-Debug:
-
-```bash
-npx expo start -c
 ```
 
 ---
 
 ## Grill decisions
 
-See [docs/decisions.md](docs/decisions.md). Item 7 updated to swipe-up + flip.
+See [docs/decisions.md](./docs/decisions.md). Item 7 updated to swipe-up + flip.
 
 ---
 
@@ -118,7 +120,7 @@ See [docs/decisions.md](docs/decisions.md). Item 7 updated to swipe-up + flip.
 
 - [ ] Figma edit seat for design sync
 - [ ] Real Firebase project + Google client IDs
-- [ ] Native phone OTP in the release APK (mock still default)
+- [ ] Native phone OTP in the release APK (mock still default on web)
 - [ ] Splash screen (deferred)
 - [ ] Wire `firestoreRepo.js` once a Firebase project exists (all methods stubbed)
 - [ ] Claims are one-directional for v1 — no accept/decline step

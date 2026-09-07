@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Scaler Hub",
-    "slug": "scaler-hub",
+    "name": "ScalerOne",
+    "slug": "scaler-one",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "scalerhub",
+    "scheme": "scalerone",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
@@ -46,7 +46,8 @@
         {
           "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#F7F9FC"
+          "backgroundColor": "#F7F9FC",
+          "imageWidth": 220
         }
       ],
       "@react-native-community/datetimepicker",

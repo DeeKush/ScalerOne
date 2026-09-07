@@ -1,8 +1,9 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { usePressAnimation } from '@/src/hooks/usePressAnimation';
 import { colors, radii, spacing, typography } from '@/src/theme/tokens';
 
 export function PhoneOtpSheet({
-  mock,
   phone,
   otp,
   onChangePhone,
@@ -12,50 +13,68 @@ export function PhoneOtpSheet({
   busy,
   error,
   status,
-  sent,
 }) {
+  const phoneReady = phone.length === 10;
+  const otpReady = phoneReady && otp.length === 6;
+  const sendPress = usePressAnimation(0.97, true);
+  const verifyPress = usePressAnimation(0.97, true);
+
   return (
     <View style={styles.sheet}>
       <Text style={styles.kicker}>Almost there</Text>
       <Text style={styles.title}>Verify your phone</Text>
-      <Text style={styles.sub}>Required after Google — not an alternate login.</Text>
+      <Text style={styles.sub}>
+        Required after Google — not an alternate login. Send OTP is optional for test numbers.
+      </Text>
 
       <Text style={styles.fieldLabel}>Phone</Text>
       <View style={styles.row}>
         <TextInput
           value={phone}
-          onChangeText={onChangePhone}
-          placeholder="+91…"
+          onChangeText={(value) => onChangePhone(value.replace(/\D/g, '').slice(0, 10))}
+          placeholder="10-digit mobile"
           placeholderTextColor={colors.textSoft}
           style={[styles.input, styles.flex]}
-          keyboardType="phone-pad"
+          keyboardType="number-pad"
+          maxLength={10}
+          textContentType="telephoneNumber"
         />
-        <Pressable
-          style={[styles.accentBtn, busy && styles.disabled]}
-          onPress={onSendOtp}
-          disabled={busy}
-        >
-          <Text style={styles.accentLabel}>Send OTP</Text>
-        </Pressable>
+        <Animated.View style={sendPress.animatedStyle}>
+          <Pressable
+            style={[styles.accentBtn, (busy || !phoneReady) && styles.disabled]}
+            onPress={onSendOtp}
+            onPressIn={busy || !phoneReady ? undefined : sendPress.onPressIn}
+            onPressOut={sendPress.onPressOut}
+            disabled={busy || !phoneReady}
+          >
+            <Text style={styles.accentLabel}>Send OTP</Text>
+          </Pressable>
+        </Animated.View>
       </View>
 
       <Text style={styles.fieldLabel}>OTP</Text>
       <View style={styles.row}>
         <TextInput
           value={otp}
-          onChangeText={onChangeOtp}
-          placeholder={mock ? '123456' : '6-digit code'}
+          onChangeText={(value) => onChangeOtp(value.replace(/\D/g, '').slice(0, 6))}
+          placeholder="6-digit code"
           placeholderTextColor={colors.textSoft}
           style={[styles.input, styles.flex]}
           keyboardType="number-pad"
+          maxLength={6}
+          textContentType="oneTimeCode"
         />
-        <Pressable
-          style={[styles.accentBtn, (busy || !sent) && styles.disabled]}
-          onPress={onVerifyOtp}
-          disabled={busy || !sent}
-        >
-          <Text style={styles.accentLabel}>Verify</Text>
-        </Pressable>
+        <Animated.View style={verifyPress.animatedStyle}>
+          <Pressable
+            style={[styles.accentBtn, (busy || !otpReady) && styles.disabled]}
+            onPress={onVerifyOtp}
+            onPressIn={busy || !otpReady ? undefined : verifyPress.onPressIn}
+            onPressOut={verifyPress.onPressOut}
+            disabled={busy || !otpReady}
+          >
+            <Text style={styles.accentLabel}>Submit OTP</Text>
+          </Pressable>
+        </Animated.View>
       </View>
 
       {status ? <Text style={styles.status}>{status}</Text> : null}
@@ -94,12 +113,14 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: colors.surfaceMuted,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: 14,
     color: colors.text,
     fontSize: 15,
     fontFamily: typography.body.fontFamily,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
   },
   row: {
     flexDirection: 'row',
@@ -112,14 +133,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     minHeight: 48,
     justifyContent: 'center',
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
+    shadowColor: colors.accent,
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
   },
   accentLabel: {
-    color: '#fff',
+    color: colors.white,
     fontFamily: typography.headline.fontFamily,
     fontSize: 13,
   },
-  disabled: { opacity: 0.45 },
+  disabled: { opacity: 0.45, shadowOpacity: 0, elevation: 0 },
   status: {
     ...typography.caption,
     color: colors.success,

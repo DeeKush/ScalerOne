@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { HUB_SECTIONS } from '@/src/data/hubSections';
 import { useNavStore } from '@/src/store/navStore';
-import { colors, radii, spacing, typography } from '@/src/theme/tokens';
+import { colors, radii, shadows, spacing, typography } from '@/src/theme/tokens';
 
 export default function HubDashboard() {
   const router = useRouter();
@@ -58,10 +58,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     backgroundColor: colors.surface,
-    borderRadius: radii.lg,
+    borderRadius: radii.card,
     padding: spacing.md,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.muted,
+    borderColor: colors.line,
+    ...shadows.card,
   },
   cardArt: {
     width: 44,

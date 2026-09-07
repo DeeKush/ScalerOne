@@ -134,6 +134,28 @@ export async function completeMockGoogle(email, fullName) {
   return profile;
 }
 
+export function toIndiaE164(input) {
+  let digits = String(input || '').replace(/\D/g, '');
+  if (digits.startsWith('91') && digits.length === 12) digits = digits.slice(2);
+  if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
+  if (!/^[6-9]\d{9}$/.test(digits)) {
+    throw new Error('Enter a 10-digit Indian mobile number.');
+  }
+  return `+91${digits}`;
+}
+
+function storedPhone(phoneInput, fallback) {
+  const raw = phoneInput || fallback || '';
+  if (!String(raw).trim()) {
+    throw new Error('Enter a 10-digit Indian mobile number.');
+  }
+  try {
+    return toIndiaE164(raw);
+  } catch {
+    return String(raw).trim();
+  }
+}
+
 export async function startPhoneVerification(phone) {
   if (useMockAuth()) {
     if (!mockSession) {
@@ -147,13 +169,13 @@ export async function startPhoneVerification(phone) {
   );
 }
 
-export async function confirmPhoneCode(verificationId, code, fullName) {
+export async function confirmPhoneCode(verificationId, code, fullName, phoneInput) {
   if (useMockAuth()) {
     if (!mockSession) throw new Error('Sign in with Google first');
     if (code.trim() !== mockSession.phoneCode) {
       throw new Error('Invalid OTP. Use 123456 in mock mode.');
     }
-    const phone = mockSession.pendingPhone ?? mockSession.profile.phone;
+    const phone = storedPhone(phoneInput, mockSession.pendingPhone ?? mockSession.profile.phone);
     const profile = {
       ...mockSession.profile,
       fullName: fullName?.trim() || mockSession.profile.fullName,
@@ -162,18 +184,24 @@ export async function confirmPhoneCode(verificationId, code, fullName) {
     };
     profile.profileComplete = computeProfileComplete(profile);
     mockSession.profile = profile;
+    mockSession.pendingPhone = phone;
     return profile;
   }
 
   const auth = getFirebaseAuth();
   if (!auth?.currentUser) throw new Error('Sign in with Google first');
+  if (!verificationId) {
+    throw new Error(
+      'Phone OTP requires a native Firebase build or Cloud Function SMS. Enable mock auth or configure native phone auth.'
+    );
+  }
   const credential = PhoneAuthProvider.credential(verificationId, code);
   await linkWithCredential(auth.currentUser, credential);
   const existing = (await loadProfile(auth.currentUser.uid)) ?? emptyProfile(auth.currentUser.uid);
   const profile = {
     ...existing,
     fullName: fullName?.trim() || existing.fullName,
-    phone: auth.currentUser.phoneNumber ?? existing.phone,
+    phone: auth.currentUser.phoneNumber ?? storedPhone(phoneInput, existing.phone),
     phoneVerified: true,
   };
   profile.profileComplete = computeProfileComplete(profile);

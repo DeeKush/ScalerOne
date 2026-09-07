@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
+import { usePressAnimation } from '@/src/hooks/usePressAnimation';
 import { colors, radii, spacing, typography } from '@/src/theme/tokens';
 
 function GoogleMark() {
@@ -35,9 +37,11 @@ export function GoogleSheet({
   error,
   status,
 }) {
+  const press = usePressAnimation(0.98);
+
   return (
     <View style={styles.sheet}>
-      <Text style={styles.kicker}>Scaler Hub</Text>
+      <Text style={styles.kicker}>ScalerOne</Text>
       <Text style={styles.title}>Sign in with Google</Text>
       <Text style={styles.sub}>Scaler accounts only · @sst.scaler.com or @scaler.com</Text>
 
@@ -54,21 +58,25 @@ export function GoogleSheet({
             keyboardType="email-address"
             autoCorrect={false}
           />
-          <Text style={styles.helper}>OTP 123456 after the card flips</Text>
+          <Text style={styles.helper}>OTP 123456 after the card flips — Send OTP is optional</Text>
         </>
       ) : null}
 
-      <Pressable
-        style={[styles.googleBtn, busy && styles.disabled]}
-        onPress={onGoogle}
-        disabled={busy}
-        accessibilityRole="button"
-      >
-        <GoogleMark />
-        <Text style={styles.googleLabel}>
-          {mock ? 'Continue with Google' : 'Sign in with Google'}
-        </Text>
-      </Pressable>
+      <Animated.View style={press.animatedStyle}>
+        <Pressable
+          style={[styles.googleBtn, busy && styles.disabled]}
+          onPress={onGoogle}
+          onPressIn={busy ? undefined : press.onPressIn}
+          onPressOut={press.onPressOut}
+          disabled={busy}
+          accessibilityRole="button"
+        >
+          <GoogleMark />
+          <Text style={styles.googleLabel}>
+            {mock ? 'Continue with Google' : 'Sign in with Google'}
+          </Text>
+        </Pressable>
+      </Animated.View>
 
       {__DEV__ ? (
         <Pressable onPress={onDevComplete} disabled={busy} hitSlop={8}>
@@ -91,8 +99,7 @@ const styles = StyleSheet.create({
   kicker: {
     ...typography.label,
     color: colors.accent,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
+    letterSpacing: 0.4,
     textAlign: 'center',
   },
   title: {
@@ -112,12 +119,14 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: colors.surfaceMuted,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: 14,
     color: colors.text,
     fontSize: 15,
     fontFamily: typography.body.fontFamily,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
   },
   helper: {
     ...typography.caption,
@@ -128,7 +137,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     minHeight: 52,
     backgroundColor: colors.surface,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.line,
     paddingVertical: 14,
@@ -137,6 +146,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 10,
+    shadowColor: '#1A2744',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
   },
   googleLabel: {
     ...typography.label,
