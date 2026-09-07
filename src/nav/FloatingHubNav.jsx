@@ -25,7 +25,8 @@ import { usePressAnimation } from '@/src/hooks/usePressAnimation';
 import { useNavStore } from '@/src/store/navStore';
 import { useReducedMotion } from '@/src/hooks/useReducedMotion';
 import { GlassSurface } from '@/src/hub/GlassSurface';
-import { colors, fonts, radii, shadows, spacing, typography } from '@/src/theme/tokens';
+import { HubIcon } from '@/src/hub/HubIcon';
+import { colors, radii, shadows, spacing, typography } from '@/src/theme/tokens';
 
 const ICON_SIZE = 52;
 const STRIDE = ICON_SIZE + 16;
@@ -47,42 +48,13 @@ const PEAK_PATH = parse(
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedFlatList = Animated.FlatList;
 
-function glyph(name) {
-  const map = {
-    search: 'LF',
-    bag: 'MP',
-    car: 'TP',
-    home: 'RS',
-    camera: 'PH',
-    cash: 'SM',
-    list: '≡',
-    alert: '!',
-    upload: '↑',
-    person: 'Me',
-    flash: '≈',
-    tag: 'Sell',
-    heart: 'Sav',
-    add: '+',
-    chat: 'Req',
-    grid: '##',
-    folder: 'Alb',
-    people: 'Grp',
-    time: 'Hist',
-  };
-  return map[name] ?? '•';
-}
-
 function SectionGlyph({ section, active }) {
   if (section?.art) {
     return (
       <Image source={section.art} style={styles.iconArt} resizeMode="contain" />
     );
   }
-  return (
-    <Text style={[styles.iconGlyph, active && styles.iconGlyphActive]}>
-      {glyph(section?.icon)}
-    </Text>
-  );
+  return <HubIcon name={section?.icon} color={active ? colors.accent : colors.text} />;
 }
 
 function NavHit({ onPress, children }) {
@@ -242,7 +214,9 @@ export function FloatingHubNav() {
         <NavHit onPress={onHome}>
           <View style={[styles.iconOuter, styles.iconOuterActive]}>
             <View style={styles.pill} />
-            <Text style={[styles.iconGlyph, styles.iconGlyphActive]}>⌂</Text>
+            <View style={styles.iconLayer}>
+              <HubIcon name="home" color={colors.accent} />
+            </View>
           </View>
           <Text style={styles.iconCaption}>Home</Text>
         </NavHit>
@@ -267,9 +241,9 @@ export function FloatingHubNav() {
                 <NavHit onPress={() => onSubPress(logical)}>
                   <View style={[styles.iconOuter, active && styles.iconOuterActive]}>
                     {active ? <View style={styles.pill} /> : null}
-                    <Text style={[styles.iconGlyph, active && styles.iconGlyphActive]}>
-                      {glyph(item.icon)}
-                    </Text>
+                    <View style={styles.iconLayer}>
+                      <HubIcon name={item.icon} color={active ? colors.accent : colors.text} />
+                    </View>
                   </View>
                   <Text style={styles.iconCaption} numberOfLines={1}>
                     {item.title}
@@ -406,14 +380,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.accent,
   },
-  iconGlyph: {
-    fontSize: 13,
-    fontFamily: fonts.bold,
-    color: colors.text,
+  iconLayer: {
     zIndex: 1,
-  },
-  iconGlyphActive: {
-    color: colors.accent,
   },
   iconCaption: {
     ...typography.caption,

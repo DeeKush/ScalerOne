@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <g id="safe" transform="translate(256 256) scale(0.82) translate(-256 -256)">
+  <g fill="none" stroke="#000000" stroke-width="19" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- swap arrows: exchange loop above the two rooms -->
+    <path d="M128 168 C128 92 208 60 256 60 C304 60 384 92 384 168" stroke-width="21"/>
+    <path d="M97 140 L128 176 L159 140" fill="#000000"/>
+    <path d="M353 140 L384 176 L415 140" fill="#000000"/>
+
+    <!-- left room -->
+    <rect x="42" y="222" width="196" height="230" rx="26" fill="#8EC5F2"/>
+    <!-- left bed: headboard, mattress, pillow, legs -->
+    <path d="M74 300 v96" stroke-width="21"/>
+    <rect x="74" y="352" width="132" height="46" rx="14" fill="#FFFFFF"/>
+    <rect x="96" y="322" width="52" height="34" rx="12" fill="#FFFFFF"/>
+    <path d="M196 398 v22" stroke-width="17"/>
+
+    <!-- right room -->
+    <rect x="274" y="222" width="196" height="230" rx="26" fill="#F4737F"/>
+    <path d="M306 300 v96" stroke-width="21"/>
+    <rect x="306" y="352" width="132" height="46" rx="14" fill="#FFFFFF"/>
+    <rect x="328" y="322" width="52" height="34" rx="12" fill="#FFFFFF"/>
+    <path d="M428 398 v22" stroke-width="17"/>
+  </g>
+  </g>
+</svg>

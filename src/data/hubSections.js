@@ -1,9 +1,11 @@
-// Tile artwork. Only four modules have art so far — anything without an entry
-// falls back to the text glyph in FloatingHubNav's glyph() map.
+// Tile artwork, one entry per module. Anything without an entry falls back to
+// the stroke icon in FloatingHubNav.
 export const HUB_ART = {
   'lost-found': require('../../assets/images/hub/lost-found.png'),
   marketplace: require('../../assets/images/hub/marketplace.png'),
   transport: require('../../assets/images/hub/transport.png'),
+  'room-swap': require('../../assets/images/hub/room-swap.png'),
+  'photo-hub': require('../../assets/images/hub/photo-hub.png'),
   'split-money': require('../../assets/images/hub/split-money.png'),
 };
 
@@ -58,6 +60,7 @@ export const HUB_SECTIONS = [
     id: 'room-swap',
     title: 'Room Swap',
     icon: 'home',
+    art: HUB_ART['room-swap'],
     subActions: [
       { id: 'rs-browse', title: 'Browse', icon: 'list' },
       { id: 'rs-post', title: 'Post', icon: 'add' },
@@ -67,6 +70,7 @@ export const HUB_SECTIONS = [
     id: 'photo-hub',
     title: 'Photo Hub',
     icon: 'camera',
+    art: HUB_ART['photo-hub'],
     subActions: [
       { id: 'ph-feed', title: 'Feed', icon: 'grid' },
       { id: 'ph-upload', title: 'Upload', icon: 'upload' },
