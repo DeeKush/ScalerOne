@@ -6,7 +6,9 @@ const root = path.resolve(__dirname, '..');
 const androidHome =
   process.env.ANDROID_HOME ||
   process.env.ANDROID_SDK_ROOT ||
-  path.join(process.env.HOME || '', 'Library/Android/sdk');
+  (process.platform === 'win32'
+    ? path.join(process.env.USERPROFILE || process.env.HOME || '', 'AppData/Local/Android/Sdk')
+    : path.join(process.env.HOME || '', 'Library/Android/sdk'));
 
 function fail(message) {
   console.error(`\n${message}\n`);
@@ -24,12 +26,16 @@ process.env.ANDROID_HOME = androidHome;
 process.env.ANDROID_SDK_ROOT = androidHome;
 
 if (!process.env.JAVA_HOME) {
-  const jdkCandidates = [
+  const isWin = process.platform === 'win32';
+  const jdkCandidates = isWin ? [
+    'C:\\Program Files\\Android\\Android Studio\\jbr',
+    'C:\\Program Files\\Android\\Android Studio\\jre'
+  ] : [
     path.join(process.env.HOME || '', 'Library/Java/JavaVirtualMachines/jbr-21.0.11/Contents/Home'),
     '/Applications/Android Studio.app/Contents/jbr/Contents/Home',
   ];
   const jdk = jdkCandidates.find((dir) => {
-    const java = path.join(dir, 'bin', 'java');
+    const java = path.join(dir, 'bin', isWin ? 'java.exe' : 'java');
     if (!fs.existsSync(java)) return false;
     const probe = spawnSync(java, ['-version'], { encoding: 'utf8' });
     const text = `${probe.stderr || ''}${probe.stdout || ''}`;
@@ -50,6 +56,7 @@ function run(command, args, cwd) {
     cwd,
     stdio: 'inherit',
     env: process.env,
+    shell: process.platform === 'win32'
   });
   if (result.status !== 0) {
     process.exit(result.status || 1);
