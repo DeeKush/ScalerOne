@@ -59,6 +59,7 @@ function glyph(name) {
     alert: '!',
     upload: '↑',
     person: 'Me',
+    flash: '≈',
     tag: 'Sell',
     heart: 'Sav',
     add: '+',

@@ -29,6 +29,7 @@ export const HUB_SECTIONS = [
         route: '/(hub)/lost-found/post?type=found',
       },
       { id: 'lf-mine', title: 'My Items', icon: 'person', route: '/(hub)/lost-found/my-posts' },
+      { id: 'lf-matches', title: 'Matches', icon: 'flash', route: '/(hub)/lost-found/matches' },
     ],
   },
   {

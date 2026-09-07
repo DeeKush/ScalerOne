@@ -9,6 +9,7 @@ import {
   reopenItem,
   resolveItem,
   updateItem,
+  listMatches,
 } from '@/src/lib/lostFound';
 
 export function useItems(filters) {
@@ -103,5 +104,13 @@ export function useResolveItem(itemId) {
       queryClient.invalidateQueries({ queryKey: ['lostFoundItem', itemId] });
       queryClient.invalidateQueries({ queryKey: ['lostFoundClaims', itemId] });
     },
+  });
+}
+
+export function useItemMatches(itemId) {
+  return useQuery({
+    queryKey: ['lostFoundMatches', itemId],
+    queryFn: () => listMatches(itemId),
+    enabled: Boolean(itemId),
   });
 }

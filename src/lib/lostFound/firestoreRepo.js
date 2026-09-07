@@ -123,3 +123,9 @@ export async function resolveItem(_itemId) {
     `${COLLECTION}.resolveItem: Firestore repo not implemented. Set EXPO_PUBLIC_LOSTFOUND_BACKEND=local.`
   );
 }
+
+export async function listMatches(_itemId) {
+  throw new Error(
+    `${COLLECTION}.listMatches: Firestore repo not implemented. Set EXPO_PUBLIC_LOSTFOUND_BACKEND=local.`
+  );
+}

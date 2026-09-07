@@ -50,6 +50,7 @@ export function ItemCard({ item }) {
 
         <Text style={styles.meta} numberOfLines={1}>
           {item.location} · {formatRelativeTime(item.createdAt)}
+          {typeof item.score === 'number' ? ` · ${Math.round(item.score * 100)}% match` : ''}
         </Text>
       </View>
     </View>

@@ -1,11 +1,20 @@
 import * as localRepo from './localRepo';
 import * as firestoreRepo from './firestoreRepo';
+import * as apiRepo from './apiRepo';
 
 export function useLostFoundBackend() {
-  return process.env.EXPO_PUBLIC_LOSTFOUND_BACKEND === 'firestore' ? 'firestore' : 'local';
+  const value = process.env.EXPO_PUBLIC_LOSTFOUND_BACKEND;
+  if (value === 'api') return 'api';
+  if (value === 'firestore') return 'firestore';
+  return 'local';
 }
 
-const repo = useLostFoundBackend() === 'firestore' ? firestoreRepo : localRepo;
+const repo =
+  useLostFoundBackend() === 'api'
+    ? apiRepo
+    : useLostFoundBackend() === 'firestore'
+      ? firestoreRepo
+      : localRepo;
 
 export const listItems = repo.listItems;
 export const getItem = repo.getItem;
@@ -16,3 +25,4 @@ export const deleteItem = repo.deleteItem;
 export const claimItem = repo.claimItem;
 export const resolveItem = repo.resolveItem;
 export const reopenItem = repo.reopenItem;
+export const listMatches = repo.listMatches;

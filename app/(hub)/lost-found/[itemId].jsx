@@ -177,6 +177,13 @@ export default function ItemDetailScreen() {
           </View>
         )}
 
+        <Pressable
+          style={styles.matchesLink}
+          onPress={() => router.push(`/(hub)/lost-found/matches/${id}`)}
+        >
+          <Text style={styles.matchesLinkText}>Possible matches</Text>
+        </Pressable>
+
         <View style={styles.badgeRow}>
           <View style={[styles.typeTag, { backgroundColor: isLost ? colors.danger : colors.success }]}>
             <Text style={styles.typeTagText}>{isLost ? 'Lost' : 'Found'}</Text>
@@ -439,6 +446,15 @@ const styles = StyleSheet.create({
     fontFamily: fonts.extraBold,
     fontSize: 48,
     color: '#fff',
+  },
+  matchesLink: {
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.xs,
+  },
+  matchesLinkText: {
+    ...typography.label,
+    fontSize: 14,
+    color: colors.accent,
   },
   badgeRow: {
     flexDirection: 'row',

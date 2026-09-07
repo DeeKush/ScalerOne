@@ -22,6 +22,8 @@ import { useLostFoundUiStore } from '@/src/store/lostFoundUiStore';
 import { useCreateItem, useUpdateItem } from '@/src/hooks/useLostFoundItems';
 import { analyzePhoto } from '@/src/lib/lostFound/photoAnalyzer';
 import { LOST_FOUND_CATEGORIES } from '@/src/lib/lostFound/categories';
+import { useLostFoundBackend } from '@/src/lib/lostFound';
+import { uploadImage } from '@/src/lib/media/uploadImage';
 import { colors, fonts, radii, spacing, typography } from '@/src/theme/tokens';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -199,13 +201,21 @@ export function ReportItemForm({ initialType, editItem }) {
     };
 
     try {
+      if (
+        useLostFoundBackend() === 'api' &&
+        content.photoUrl &&
+        !/^https?:\/\//i.test(content.photoUrl)
+      ) {
+        const uploaded = await uploadImage({ feature: 'lost-found', uri: content.photoUrl });
+        content.photoUrl = uploaded.url;
+      }
       if (isEditing) {
         await updateItem.mutateAsync(content);
         setToast('Post updated.');
         router.back();
         return;
       }
-      await createItem.mutateAsync({
+      const created = await createItem.mutateAsync({
         ...content,
         type: effectiveType,
         status: 'open',
@@ -213,6 +223,10 @@ export function ReportItemForm({ initialType, editItem }) {
         postedByName: profile?.fullName ?? 'Scaler Student',
       });
       setToast(isLost ? 'Lost item posted.' : 'Found item posted.');
+      if (created?.id && useLostFoundBackend() === 'api') {
+        router.replace(`/(hub)/lost-found/matches/${created.id}`);
+        return;
+      }
       router.replace('/(hub)/lost-found');
     } catch (err) {
       // Surface failures inline. Alert.alert is a no-op on react-native-web, so

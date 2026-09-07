@@ -450,3 +450,7 @@ export async function resolveItem(itemId) {
     throw new Error(`Lost & Found item not found: ${itemId}`);
   }
 }
+
+export async function listMatches(_itemId) {
+  return { matches: [], reason: 'local_backend' };
+}
