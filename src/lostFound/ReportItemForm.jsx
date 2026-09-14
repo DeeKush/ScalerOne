@@ -83,6 +83,8 @@ export function ReportItemForm({ initialType, editItem }) {
   const [phone, setPhone] = useState(editItem?.contactValue || profile?.phone || '');
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
+  const [photoError, setPhotoError] = useState(null);
+  const [analysisFailed, setAnalysisFailed] = useState(false);
 
   const effectiveType = editItem?.type ?? initialType ?? selectedType;
   const isLost = effectiveType === 'lost';
@@ -112,15 +114,31 @@ export function ReportItemForm({ initialType, editItem }) {
           : 'Post Found Item',
   };
 
-  const runAnalysis = async (uri) => {
+  const runAnalysis = async (uri, mime) => {
     setAnalyzing(true);
     setNoteDismissed(false);
+    setAnalysisFailed(false);
     try {
-      const result = await analyzePhoto(uri);
+      const result = await analyzePhoto(uri, mime);
+      if (result.status === 'failed') {
+        setAnalysisFailed(true);
+        return;
+      }
       setTitle((prev) => (prev.trim() ? prev : result.suggestedTitle));
       setCategory((prev) => (prev ? prev : result.suggestedCategory));
-      setDescription((prev) => (prev.trim() ? prev : result.suggestedDescription));
+      setDescription((prev) => {
+        if (prev.trim()) return prev;
+        if (!result.detectedText) return result.suggestedDescription ?? '';
+        return `${result.suggestedDescription ?? ''}\n\nText visible on item: ${result.detectedText}`.trim();
+      });
       setAutofilled(true);
+    } catch (err) {
+      // A real analysis call can genuinely fail (network, rate limit) —
+      // the mock never does, which is why this was silently unhandled
+      // before real analysis existed. Degrade honestly instead of leaving
+      // the student looking at a spinner that clears with nothing to show.
+      console.error('[lost-found] photo analysis failed', err);
+      setAnalysisFailed(true);
     } finally {
       setAnalyzing(false);
     }
@@ -335,6 +353,11 @@ export function ReportItemForm({ initialType, editItem }) {
                 <Text style={styles.autofillDismiss}>×</Text>
               </Pressable>
             </View>
+          ) : null}
+          {analysisFailed ? (
+            <Text style={styles.errorText}>
+              Couldn't auto-fill from this photo — please fill the details in yourself.
+            </Text>
           ) : null}
         </View>
 

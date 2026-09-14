@@ -3,6 +3,7 @@ import { getDb, itemsCol, claimsCol, ensureIndexes, ensureVectorIndex } from '..
 import { requireUser } from '../firebaseAuth.js';
 import { deleteImageRecord, extractImageId } from './images.js';
 import { embedItem, fetchImageBytes } from '../clip.js';
+import { analyzePhoto as geminiAnalyzePhoto } from '../gemini.js';
 
 const CATEGORY_LABELS = {
   electronics: 'Electronics',
@@ -281,6 +282,39 @@ export function registerLostFoundRoutes(app) {
 
   app.post('/v1/lost-found/items/:id/resolve', requireUser, async (c) => {
     return setStatus(c, 'resolved');
+  });
+
+  // Photo analysis for report-form autofill. Pure passthrough — nothing is
+  // written to Mongo or R2 here, the photo bytes are discarded after the
+  // call. Always returns 200; a failed/low-confidence analysis is a normal
+  // outcome (status field), not an HTTP error.
+  app.post('/v1/lost-found/analyze-photo', requireUser, async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const mime = body.mime || 'image/jpeg';
+    const bytes = Buffer.from(String(body.base64 || '').replace(/^data:[^;]+;base64,/, ''), 'base64');
+
+    const failed = () =>
+      c.json({
+        status: 'failed',
+        suggestedTitle: null,
+        suggestedCategory: null,
+        suggestedDescription: null,
+        confidence: null,
+        detectedText: null,
+      });
+
+    if (!bytes.length) return failed();
+
+    try {
+      const result = await geminiAnalyzePhoto({ bytes, mime });
+      const avgConfidence =
+        (result.confidence.title + result.confidence.category + result.confidence.description) / 3;
+      const status = avgConfidence >= 0.5 ? 'ok' : 'low_confidence';
+      return c.json({ ...result, status });
+    } catch (err) {
+      console.error('[gemini] analyze-photo failed', err?.message ?? err);
+      return failed();
+    }
   });
 }
 
