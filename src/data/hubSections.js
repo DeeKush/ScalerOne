@@ -1,7 +1,11 @@
+// Tile artwork, one entry per module. Anything without an entry falls back to
+// the stroke icon in FloatingHubNav.
 export const HUB_ART = {
   'lost-found': require('../../assets/images/hub/lost-found.png'),
   marketplace: require('../../assets/images/hub/marketplace.png'),
   transport: require('../../assets/images/hub/transport.png'),
+  'room-swap': require('../../assets/images/hub/room-swap.png'),
+  'photo-hub': require('../../assets/images/hub/photo-hub.png'),
   'split-money': require('../../assets/images/hub/split-money.png'),
 };
 
@@ -11,11 +15,23 @@ export const HUB_SECTIONS = [
     title: 'Lost & Found',
     icon: 'search',
     art: HUB_ART['lost-found'],
+    route: '/(hub)/lost-found',
     subActions: [
-      { id: 'lf-home', title: 'Browse', icon: 'list' },
-      { id: 'lf-report', title: 'Report Lost', icon: 'alert' },
-      { id: 'lf-upload', title: 'Upload Found', icon: 'upload' },
-      { id: 'lf-mine', title: 'My Items', icon: 'person' },
+      { id: 'lf-home', title: 'Browse', icon: 'list', route: '/(hub)/lost-found' },
+      {
+        id: 'lf-report',
+        title: 'Report Lost',
+        icon: 'alert',
+        route: '/(hub)/lost-found/post?type=lost',
+      },
+      {
+        id: 'lf-upload',
+        title: 'Upload Found',
+        icon: 'upload',
+        route: '/(hub)/lost-found/post?type=found',
+      },
+      { id: 'lf-mine', title: 'My Items', icon: 'person', route: '/(hub)/lost-found/my-posts' },
+      { id: 'lf-matches', title: 'Matches', icon: 'flash', route: '/(hub)/lost-found/matches' },
     ],
   },
   {
@@ -44,6 +60,7 @@ export const HUB_SECTIONS = [
     id: 'room-swap',
     title: 'Room Swap',
     icon: 'home',
+    art: HUB_ART['room-swap'],
     subActions: [
       { id: 'rs-browse', title: 'Browse', icon: 'list' },
       { id: 'rs-post', title: 'Post', icon: 'add' },
@@ -53,6 +70,7 @@ export const HUB_SECTIONS = [
     id: 'photo-hub',
     title: 'Photo Hub',
     icon: 'camera',
+    art: HUB_ART['photo-hub'],
     subActions: [
       { id: 'ph-feed', title: 'Feed', icon: 'grid' },
       { id: 'ph-upload', title: 'Upload', icon: 'upload' },

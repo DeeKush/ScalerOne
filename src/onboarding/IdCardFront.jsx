@@ -1,13 +1,13 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { idCard, radii } from '@/src/theme/tokens';
+import { colors, idCard, radii } from '@/src/theme/tokens';
 import { SST_CAMPUS, SHIELD_PATH } from '@/src/onboarding/campus';
 import { ShieldPhoto } from '@/src/onboarding/ShieldPhoto';
 
 function ScalerMark({ size = 28 }) {
   return (
     <Svg width={size} height={size * 1.15} viewBox="0 0 100 120">
-      <Path d={SHIELD_PATH} fill="#FFFFFF" />
+      <Path d={SHIELD_PATH} fill={colors.white} />
       <Path
         d="M32 38 C44 28 56 28 68 38 C58 46 58 58 68 70 C56 80 44 80 32 70 C42 58 42 46 32 38 Z"
         fill={idCard.header}
@@ -55,7 +55,7 @@ export function IdCardFront({ data }) {
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderRadius: radii.card,
     overflow: 'hidden',
   },
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   brand: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: 0.6,

@@ -23,8 +23,8 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
   },
   fallback: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderColor: colors.muted,
+    backgroundColor: colors.glassAndroid,
+    borderColor: colors.glassBorder,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.lg,
   },

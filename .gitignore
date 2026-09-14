@@ -33,6 +33,10 @@ yarn-error.*
 # local env files
 .env
 .env*.local
+server/.env
+
+# Vercel
+.vercel
 
 # Firebase / Google native config (download from Firebase Console)
 google-services.json
@@ -48,3 +52,6 @@ GoogleService-Info.plist
 
 # Android SDK machine-local (if android/ is ever committed)
 **/local.properties
+
+# Local JDK distribution
+.jdk17/

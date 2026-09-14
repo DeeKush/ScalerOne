@@ -4,6 +4,7 @@ import 'react-native-reanimated';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -13,7 +14,8 @@ import { PlusJakartaSans_600SemiBold } from '@expo-google-fonts/plus-jakarta-san
 import { PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans/700Bold';
 import { PlusJakartaSans_800ExtraBold } from '@expo-google-fonts/plus-jakarta-sans/800ExtraBold';
 import { useAuthStore } from '@/src/store/authStore';
-import { loadProfile, profileFromAuthUser, subscribeAuth } from '@/src/lib/auth';
+import { getMockProfile, loadProfile, subscribeAuth } from '@/src/lib/auth';
+import { useMockAuth } from '@/src/lib/firebase';
 import { colors } from '@/src/theme/tokens';
 
 export { ErrorBoundary } from 'expo-router';
@@ -33,43 +35,26 @@ function AuthGate({ children }) {
 
   useEffect(() => {
     let unsub;
-    let cancelled = false;
-    setLoading(true);
-    try {
+    (async () => {
+      setLoading(true);
+      if (useMockAuth()) {
+        setProfile(getMockProfile());
+        setLoading(false);
+        SplashScreen.hideAsync().catch(() => undefined);
+        return;
+      }
       unsub = subscribeAuth(async (user) => {
-        try {
-          if (!user) {
-            setProfile(null);
-            return;
-          }
-          const current = useAuthStore.getState().profile;
-          try {
-            const p = await loadProfile(user.uid);
-            if (cancelled) return;
-            if (p) {
-              setProfile(p);
-            } else if (current?.uid !== user.uid) {
-              setProfile(profileFromAuthUser(user));
-            }
-          } catch {
-            if (cancelled) return;
-            if (current?.uid !== user.uid) {
-              setProfile(profileFromAuthUser(user));
-            }
-          }
-        } finally {
-          if (!cancelled) {
-            setLoading(false);
-            SplashScreen.hideAsync().catch(() => undefined);
-          }
+        if (!user) {
+          setProfile(null);
+        } else {
+          const p = await loadProfile(user.uid);
+          setProfile(p);
         }
+        setLoading(false);
+        SplashScreen.hideAsync().catch(() => undefined);
       });
-    } catch {
-      setLoading(false);
-      SplashScreen.hideAsync().catch(() => undefined);
-    }
+    })();
     return () => {
-      cancelled = true;
       unsub?.();
     };
   }, [setLoading, setProfile]);
@@ -106,16 +91,18 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <QueryClientProvider client={queryClient}>
-        <AuthGate>
-          <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(hub)" />
-          </Stack>
-        </AuthGate>
-      </QueryClientProvider>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthGate>
+            <StatusBar style="dark" />
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(hub)" />
+            </Stack>
+          </AuthGate>
+        </QueryClientProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
