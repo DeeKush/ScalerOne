@@ -6,7 +6,6 @@ import { File, Paths } from 'expo-file-system';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -24,6 +23,7 @@ import { analyzePhoto } from '@/src/lib/lostFound/photoAnalyzer';
 import { LOST_FOUND_CATEGORIES } from '@/src/lib/lostFound/categories';
 import { useLostFoundBackend } from '@/src/lib/lostFound';
 import { uploadImage } from '@/src/lib/media/uploadImage';
+import { compressPhoto } from '@/src/lib/media/compressImage';
 import { colors, fonts, radii, spacing, typography } from '@/src/theme/tokens';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -39,7 +39,12 @@ function isPlausiblePhoneNumber(value) {
 
 // Picker results live in a temp/cache location the OS can clear at any time —
 // copy into the app's persistent document directory so posted photos survive.
+// expo-file-system's File/Paths classes have no web implementation (confirmed:
+// `new File()` throws "this.validatePath is not a function" there), and web
+// doesn't need this anyway — a picked photo's blob: URI already lives for the
+// session, which is long enough to get from pick to submit.
 function persistPickedPhoto(sourceUri) {
+  if (Platform.OS === 'web') return sourceUri;
   const source = new File(sourceUri);
   const extension = source.extension || '.jpg';
   const dest = new File(Paths.document, `lostfound-${Crypto.randomUUID()}${extension}`);
@@ -63,6 +68,7 @@ export function ReportItemForm({ initialType, editItem }) {
 
   const [selectedType, setSelectedType] = useState(initialType ?? null);
   const [photoUri, setPhotoUri] = useState(editItem?.photoUrl || null);
+  const [photoMime, setPhotoMime] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [autofilled, setAutofilled] = useState(false);
   const [noteDismissed, setNoteDismissed] = useState(false);
@@ -120,23 +126,37 @@ export function ReportItemForm({ initialType, editItem }) {
     }
   };
 
-  const onPickedPhoto = (uri) => {
+  const onPickedPhoto = async (uri, mime) => {
+    let compressedUri = uri;
+    let compressedMime = mime ?? null;
+    try {
+      const compressed = await compressPhoto(uri);
+      compressedUri = compressed.uri;
+      compressedMime = compressed.mime;
+    } catch (err) {
+      // Compression is a best-effort optimization — fall back to the
+      // original picked file rather than blocking the whole flow on it.
+      console.error('[lost-found] photo compression failed, using original', err);
+    }
+
     let persistedUri;
     try {
-      persistedUri = persistPickedPhoto(uri);
+      persistedUri = persistPickedPhoto(compressedUri);
     } catch (err) {
-      Alert.alert('Could not save photo', err?.message ?? 'Please try again.');
+      setPhotoError(err?.message ?? 'Could not save photo. Please try again.');
       return;
     }
+    setPhotoError(null);
     setPhotoUri(persistedUri);
+    setPhotoMime(compressedMime);
     setAutofilled(false);
-    runAnalysis(persistedUri);
+    runAnalysis(persistedUri, compressedMime);
   };
 
   const pickFromCamera = async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Camera permission needed', 'Enable camera access in settings to take a photo.');
+      setPhotoError('Camera permission needed — enable camera access in settings to take a photo.');
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -145,13 +165,13 @@ export function ReportItemForm({ initialType, editItem }) {
       aspect: [1, 1],
       quality: 0.7,
     });
-    if (!result.canceled) onPickedPhoto(result.assets[0].uri);
+    if (!result.canceled) onPickedPhoto(result.assets[0].uri, result.assets[0].mimeType);
   };
 
   const pickFromLibrary = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Photo access needed', 'Enable photo library access in settings to pick a photo.');
+      setPhotoError('Photo access needed — enable photo library access in settings to pick a photo.');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -160,15 +180,7 @@ export function ReportItemForm({ initialType, editItem }) {
       aspect: [1, 1],
       quality: 0.7,
     });
-    if (!result.canceled) onPickedPhoto(result.assets[0].uri);
-  };
-
-  const onPressPhoto = () => {
-    Alert.alert('Add a photo', undefined, [
-      { text: 'Take Photo', onPress: pickFromCamera },
-      { text: 'Choose from Library', onPress: pickFromLibrary },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
+    if (!result.canceled) onPickedPhoto(result.assets[0].uri, result.assets[0].mimeType);
   };
 
   const validate = () => {
@@ -206,7 +218,11 @@ export function ReportItemForm({ initialType, editItem }) {
         content.photoUrl &&
         !/^https?:\/\//i.test(content.photoUrl)
       ) {
-        const uploaded = await uploadImage({ feature: 'lost-found', uri: content.photoUrl });
+        const uploaded = await uploadImage({
+          feature: 'lost-found',
+          uri: content.photoUrl,
+          mime: photoMime ?? undefined,
+        });
         content.photoUrl = uploaded.url;
       }
       if (isEditing) {
@@ -284,21 +300,26 @@ export function ReportItemForm({ initialType, editItem }) {
 
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>Photo</Text>
-          <Pressable style={styles.photoBox} onPress={onPressPhoto}>
+          <View style={styles.photoBox}>
             {photoUri ? (
               <Image source={{ uri: photoUri }} style={styles.photoImage} />
             ) : (
               <View style={styles.photoPlaceholder}>
                 <Text style={styles.photoPlus}>+</Text>
-                <Text style={styles.photoLabel}>Add a photo</Text>
               </View>
             )}
-          </Pressable>
-          {photoUri ? (
-            <Pressable onPress={onPressPhoto} hitSlop={8}>
-              <Text style={styles.photoChange}>Change photo</Text>
+          </View>
+          <View style={styles.photoActionRow}>
+            <Pressable style={styles.photoActionButton} onPress={pickFromCamera}>
+              <Text style={styles.photoActionText}>Take Photo</Text>
             </Pressable>
-          ) : null}
+            <Pressable style={styles.photoActionButton} onPress={pickFromLibrary}>
+              <Text style={styles.photoActionText}>
+                {photoUri ? 'Choose Different' : 'Choose from Library'}
+              </Text>
+            </Pressable>
+          </View>
+          {photoError ? <Text style={styles.errorText}>{photoError}</Text> : null}
           {analyzing ? (
             <View style={styles.analyzingRow}>
               <ActivityIndicator size="small" color={colors.accent} />
@@ -523,14 +544,25 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: colors.textSoft,
   },
-  photoLabel: {
-    ...typography.caption,
-    color: colors.textSoft,
+  photoActionRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
-  photoChange: {
+  photoActionButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    borderRadius: radii.md,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.muted,
+  },
+  photoActionText: {
     ...typography.caption,
-    color: colors.accent,
-    marginTop: spacing.xs,
+    fontSize: 13,
+    color: colors.text,
   },
   analyzingRow: {
     flexDirection: 'row',
