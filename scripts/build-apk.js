@@ -25,6 +25,11 @@ if (!fs.existsSync(androidHome)) {
 process.env.ANDROID_HOME = androidHome;
 process.env.ANDROID_SDK_ROOT = androidHome;
 
+const localJdk = path.join(root, '.jdk17', 'jdk-17.0.20.1+1');
+if (fs.existsSync(localJdk)) {
+  process.env.JAVA_HOME = localJdk;
+}
+
 if (!process.env.JAVA_HOME) {
   const isWin = process.platform === 'win32';
   const jdkCandidates = isWin ? [
@@ -80,6 +85,12 @@ if (fs.existsSync(wrapperProps)) {
     .readFileSync(wrapperProps, 'utf8')
     .replace(/networkTimeout=\d+/, 'networkTimeout=120000');
   fs.writeFileSync(wrapperProps, next);
+}
+
+const gradleProps = path.join(root, 'android', 'gradle.properties');
+if (fs.existsSync(gradleProps)) {
+  const props = fs.readFileSync(gradleProps, 'utf8');
+  fs.writeFileSync(gradleProps, props.replace(/org\.gradle\.jvmargs=-Xmx\d+m/, 'org.gradle.jvmargs=-Xmx4096m'));
 }
 
 console.log('2/3  assembleRelease (JS bundled into APK — no Metro, no USB)');
