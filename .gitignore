@@ -52,3 +52,6 @@ GoogleService-Info.plist
 
 # Android SDK machine-local (if android/ is ever committed)
 **/local.properties
+
+# Local JDK distribution
+.jdk17/
